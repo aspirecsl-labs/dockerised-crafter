@@ -2,13 +2,14 @@ FROM openjdk:8-jre-slim-buster
 # Make sure pipes are considered to determine success, see: https://github.com/hadolint/hadolint/wiki/DL4006
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ARG SERVICE
-ARG VERSION
-ARG CHECKSUM
+ARG SERVICE_PORTS
+ARG CRAFTER_SERVICE
+ARG CRAFTER_VERSION
+ARG CRAFTER_INSTALLER_CHECKSUM
 
 ENV CRAFTER_HOME "/opt/crafter"
-ENV DOWNLOAD_TO "/tmp/crafter-cms-$SERVICE-$VERSION.tar.gz"
-ENV DOWNLOAD_LINK "https://downloads.craftercms.org/$VERSION/crafter-cms-$SERVICE-$VERSION.tar.gz"
+ENV DOWNLOAD_TO "/tmp/crafter-cms-$CRAFTER_SERVICE-$CRAFTER_VERSION.tar.gz"
+ENV DOWNLOAD_LINK "https://downloads.craftercms.org/$CRAFTER_VERSION/crafter-cms-$CRAFTER_SERVICE-$CRAFTER_VERSION.tar.gz"
 
 COPY sudoers /
 COPY entrypoint.sh /
@@ -27,9 +28,9 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends libncurses5 && \
     apt-get install -y --no-install-recommends openssh-client && \
     wget --output-document=$DOWNLOAD_TO $DOWNLOAD_LINK && \
-    if [ "$CHECKSUM" != "$(sha512sum $DOWNLOAD_TO | awk '{print($1)}')" ]; \
+    if [ "$CRAFTER_INSTALLER_CHECKSUM" != "$(sha512sum $DOWNLOAD_TO | awk '{print($1)}')" ]; \
     then \
-        echo "checksum mismatch on the downloaded crafter $SERVICE bundle! exiting..." && \
+        echo "checksum mismatch on the downloaded crafter $CRAFTER_SERVICE bundle! exiting..." && \
         exit 1; \
     else \
         mkdir -p /opt/crafter \
@@ -53,17 +54,16 @@ RUN apt-get update && \
 
 VOLUME ["/opt/crafter/data"]
 VOLUME ["/opt/crafter/backups"]
-EXPOSE \
-# delivery
-    9080 \
-# authoring
-    8080 \
-# JPDA debug
-    8000
+
+# Expose the following service ports
+# 1. Delivery main port (default: 9080) if delivery server
+# 2. Authoring main port (default: 8080) if authoring server
+# 3. JPDA debug port (default 8000) for both delivery and authoring servers
+EXPOSE $SERVICE_PORTS
 
 USER crafter
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["run"]
-HEALTHCHECK CMD curl -sSLf http://localhost:8080/studio >/dev/null || exit 1
+HEALTHCHECK CMD curl -sSLf http://localhost:$SERVICE_PORT >/dev/null || exit 1
 
