@@ -22,15 +22,15 @@ runOrDebugCrafter() {
   echo "------------------------------------------------------------------------"
   echo "Starting Tomcat"
   echo "------------------------------------------------------------------------"
-  "$CRAFTER_BIN_DIR"/apache-tomcat/bin/catalina.sh $catalinaMode
+  exec "$CRAFTER_BIN_DIR"/apache-tomcat/bin/catalina.sh $catalinaMode
 }
 
 status() {
   elasticsearchStatus
   crafterModuleStatus "Crafter Deployer" "$DEPLOYER_PORT" "" "1" "$DEPLOYER_PID"
-  crafterModuleStatus "Crafter Engine" "$TOMCAT_HTTP_PORT" "" "1" "$CATALINA_PID"
-  crafterModuleStatus "Crafter Studio" "$TOMCAT_HTTP_PORT" "/studio" "2" "$CATALINA_PID"
-  crafterModuleStatus "Crafter Search" "$TOMCAT_HTTP_PORT" "/crafter-search" "1" "$CATALINA_PID"
+  crafterModuleStatus "Crafter Engine" "$TOMCAT_HTTP_PORT" "" "1"
+  crafterModuleStatus "Crafter Studio" "$TOMCAT_HTTP_PORT" "/studio" "2"
+  crafterModuleStatus "Crafter Search" "$TOMCAT_HTTP_PORT" "/crafter-search" "1"
 }
 
 elasticsearchStatus() {
@@ -58,8 +58,10 @@ crafterModuleStatus() {
   echo "------------------------------------------------------------------------"
 
   if statusOut=$(curl --silent -f "http://localhost:$2$3/api/$4/monitoring/status?token=defaultManagementToken"); then
-    echo -e "PID\t"
-    cat "$5"
+    if [ "${5:-X}" != 'X' ]; then
+      echo -e "PID\t"
+      cat "$5"
+    fi
     echo -e "Uptime (in seconds):\t"
     echo "$statusOut" | grep -Eo '"uptime":\d+' | awk -F ":" '{print $2}'
     if versionOut=$(curl --silent -f "http://localhost:$2$3/api/$4/monitoring/version?token=defaultManagementToken"); then
@@ -101,5 +103,6 @@ elif [ "$1" = 'restore' ]; then
   fi
   $CRAFTER_BIN_DIR/crafter.sh restore "$2"
 else
-  "$@"
+  echo "Invalid option:- $1"
+  exit 1
 fi

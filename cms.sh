@@ -143,21 +143,21 @@ build() {
     --tag crafter-"$CRAFTER_SERVICE":"$CRAFTER_VERSION" .
 }
 
-execute() {
-  docker exec "$1" "exec" "/crafter-entrypoint.sh" "$2" "$3"
+executeCommand() {
+  if [ "$2" = 'exec' ]; then
+    docker exec -it "$1" "$3"
+  else
+    docker exec "$1" "/crafter-entrypoint.sh" "$2" "$3"
+  fi
 }
 
 CMS_HOME=${CMS_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
 
 DEFAULT_CRAFTER_VERSION=$(readProperty "$CMS_HOME"/cms.properties "default-crafter-version")
 
-ops=(run build status backup restore upgrade selfupdate)
-services=(authoring delivery)
+ops=(run exec build status backup restore upgrade selfupdate)
 
 if ! arrayContainsElement "$1" "${ops[@]}"; then
-  bad_usage
-fi
-if ! arrayContainsElement "$2" "${services[@]}"; then
   bad_usage
 fi
 
@@ -172,7 +172,7 @@ build)
   build "$2" "$3"
   ;;
 *)
-  execute "$2" "$1" "$3"
+  executeCommand "$2" "$1" "$3"
   ;;
 esac
 

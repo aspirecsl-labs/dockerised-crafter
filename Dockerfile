@@ -8,6 +8,7 @@ ARG CRAFTER_SERVICE
 ARG CRAFTER_VERSION
 ARG CRAFTER_INSTALLER_CHECKSUM
 
+ENV SERVICE_PORT $MAIN_PORT
 ENV CRAFTER_HOME "/opt/crafter"
 ENV DOWNLOAD_TO "/tmp/crafter-cms-$CRAFTER_SERVICE-$CRAFTER_VERSION.tar.gz"
 ENV DOWNLOAD_LINK "https://downloads.craftercms.org/$CRAFTER_VERSION/crafter-cms-$CRAFTER_SERVICE-$CRAFTER_VERSION.tar.gz"
@@ -65,11 +66,11 @@ VOLUME ["/opt/crafter/backups"]
 # 1. Delivery main port (default: 9080) if delivery server
 # 2. Authoring main port (default: 8080) if authoring server
 # 3. JPDA debug port (default 8000) for both delivery and authoring servers
-EXPOSE $MAIN_PORT $AUX_PORTS
+EXPOSE $SERVICE_PORT $AUX_PORTS
 
 USER crafter
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["run"]
-HEALTHCHECK CMD curl -sSLf http://localhost:$MAIN_PORT >/dev/null || exit 1
+HEALTHCHECK CMD curl -sSLf http://localhost:$SERVICE_PORT >/dev/null || exit 1
 
