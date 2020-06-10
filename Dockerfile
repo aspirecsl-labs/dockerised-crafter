@@ -2,7 +2,8 @@ FROM openjdk:8-jre-slim-buster
 # Make sure pipes are considered to determine success, see: https://github.com/hadolint/hadolint/wiki/DL4006
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ARG SERVICE_PORTS
+ARG AUX_PORTS
+ARG MAIN_PORT
 ARG CRAFTER_SERVICE
 ARG CRAFTER_VERSION
 ARG CRAFTER_INSTALLER_CHECKSUM
@@ -12,7 +13,8 @@ ENV DOWNLOAD_TO "/tmp/crafter-cms-$CRAFTER_SERVICE-$CRAFTER_VERSION.tar.gz"
 ENV DOWNLOAD_LINK "https://downloads.craftercms.org/$CRAFTER_VERSION/crafter-cms-$CRAFTER_SERVICE-$CRAFTER_VERSION.tar.gz"
 
 COPY sudoers /
-COPY entrypoint.sh /
+COPY crafter-entrypoint.sh /
+COPY docker-entrypoint.sh /
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git && \
@@ -35,10 +37,12 @@ RUN apt-get update && \
     else \
         mkdir -p /opt/crafter \
                  /opt/crafter/bin \
-                 /opt/crafter/data \
-                 /opt/crafter/logs \
                  /opt/crafter/backups \
-                 /opt/crafter/temp/tomcat && \
+                 /opt/crafter/temp/tomcat \
+                 /opt/crafter/logs/tomcat \
+                 /opt/crafter/logs/deployer \
+                 /opt/crafter/data/indexes-es \
+                 /opt/crafter/logs/elasticsearch && \
         groupadd -g 1000 -r crafter && \
         useradd -r -u 1000 -g crafter crafter && \
         tar -x -v -f $DOWNLOAD_TO && \
@@ -47,11 +51,13 @@ RUN apt-get update && \
         cp /sudoers /etc && \
         chmod 440 /etc/sudoers && \
         chown root:root /etc/sudoers && \
-        chmod ugo+x /entrypoint.sh && \
-        chown -R crafter:crafter /opt/crafter /entrypoint.sh; \
+        chmod ugo+x /docker-entrypoint.sh && \
+        chmod ugo+x /crafter-entrypoint.sh && \
+        chown -R crafter:crafter /opt/crafter /docker-entrypoint.sh /crafter-entrypoint.sh; \
     fi; \
     rm -rf /var/lib/apt/lists/* $DOWNLOAD_TO
 
+VOLUME ["/opt/crafter/logs"]
 VOLUME ["/opt/crafter/data"]
 VOLUME ["/opt/crafter/backups"]
 
@@ -59,11 +65,11 @@ VOLUME ["/opt/crafter/backups"]
 # 1. Delivery main port (default: 9080) if delivery server
 # 2. Authoring main port (default: 8080) if authoring server
 # 3. JPDA debug port (default 8000) for both delivery and authoring servers
-EXPOSE $SERVICE_PORTS
+EXPOSE $MAIN_PORT $AUX_PORTS
 
 USER crafter
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["run"]
-HEALTHCHECK CMD curl -sSLf http://localhost:$SERVICE_PORT >/dev/null || exit 1
+HEALTHCHECK CMD curl -sSLf http://localhost:$MAIN_PORT >/dev/null || exit 1
 

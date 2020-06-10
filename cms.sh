@@ -1,5 +1,5 @@
 #!/bin/bash
-#set -x
+set -x
 
 bad_usage() {
   echo -e "\nUsage: cms.sh authoring|delivery run|build [options]\n"
@@ -41,37 +41,92 @@ enumerateOptions() {
   done
 }
 
-run() {
-  local service=$1
-  enumerateOptions "$2"
+start() {
+  local service=$2
+  enumerateOptions "$3"
 
-  debug_port=${debug_port:-8000}
   version=${version:-$DEFAULT_CRAFTER_VERSION}
+  es_debug_port=${es_debug_port:-4004}
+  engine_debug_port=${engine_debug_port:-8000}
+  deployer_debug_port=${deployer_debug_port:-5005}
 
   echo "Starting container: crafter-$service:${version}"
+
   if [ "$service" = 'authoring' ]; then
     port=${port:-8080}
-    echo "*** port=${port} | debug port=${debug_port} ***"
+    es_port=${es_port:-9201}
+    deployer_port=${deployer_port:-9191}
+    echo "*** port=${port} | debug port=${engine_debug_port} ***"
     sleep 1s
-    docker run -p "${port}":8080 -p "${debug_port}":8000 "crafter-$service:$version"
+    # $1 = "run" means the docker container starts in normal mode
+    # $1 = "debug" means the docker container starts in debug mode
+    if [ "$1" = 'debug' ]; then
+      docker run --rm \
+        -p "${port}":8080 \
+        -p "${es_port}":9201 \
+        -p "${deployer_port}":9191 \
+        -p "${es_debug_port}":4004 \
+        -p "${engine_debug_port}":8000 \
+        -p "${deployer_debug_port}":5005 \
+        "crafter-$service:$version" "debug"
+    else
+      docker run --rm \
+        -p "${port}":8080 \
+        -p "${es_port}":9201 \
+        -p "${deployer_port}":9191 \
+        -p "${es_debug_port}":4004 \
+        -p "${engine_debug_port}":8000 \
+        -p "${deployer_debug_port}":5005 \
+        "crafter-$service:$version"
+    fi
   else
     port=${port:-9080}
-    echo "*** port=${port} | debug port=${debug_port} ***"
+    es_port=${es_port:-9202}
+    deployer_port=${deployer_port:-9192}
+    echo "*** port=${port} | debug port=${engine_debug_port} ***"
     sleep 1s
-    docker run -p "${port}":9080 -p "${debug_port}":8000 "crafter-$service:$version"
+    # $1 = "run" means the docker container starts in normal mode
+    # $1 = "debug" means the docker container starts in debug mode
+    if [ "$1" = 'debug' ]; then
+      docker run --rm \
+        -p "${port}":9080 \
+        -p "${es_port}":9202 \
+        -p "${deployer_port}":9192 \
+        -p "${es_debug_port}":4004 \
+        -p "${engine_debug_port}":8000 \
+        -p "${deployer_debug_port}":5005 \
+        "crafter-$service:$version" "debug"
+    else
+      docker run --rm \
+        -p "${port}":9080 \
+        -p "${es_port}":9202 \
+        -p "${deployer_port}":9192 \
+        -p "${es_debug_port}":4004 \
+        -p "${engine_debug_port}":8000 \
+        -p "${deployer_debug_port}":5005 \
+        "crafter-$service:$version"
+    fi
   fi
 }
 
 build() {
   enumerateOptions "$2"
   export CRAFTER_SERVICE=$1
-  export SERVICE_PORTS=8000 # JDPA debug port for the Crafter tomcat server - same for authoring and delivery servers
+  # JPDA debug ports - same for Authoring and Delivery
+  # 4004 - ElasticSearch
+  # 5005 - Crafter Deployer
+  # 8000 - Crafter Studio & Engine
+  AUX_PORTS="4004 5005 8000"
 
   if [ "$CRAFTER_SERVICE" = 'authoring' ]; then
-    export SERVICE_PORTS="${SERVICE_PORTS} 8080"
+    MAIN_PORT=8080
+    AUX_PORTS="${AUX_PORTS} 9191 9201"
   else
-    export SERVICE_PORTS="${SERVICE_PORTS} 9080"
+    MAIN_PORT=9080
+    AUX_PORTS="${AUX_PORTS} 9192 9202"
   fi
+  export MAIN_PORT
+  export AUX_PORTS
 
   CRAFTER_VERSION=${version:-$DEFAULT_CRAFTER_VERSION}
   export CRAFTER_VERSION
@@ -80,37 +135,43 @@ build() {
   export CRAFTER_INSTALLER_CHECKSUM
 
   docker build \
-    --build-arg SERVICE_PORTS \
+    --build-arg AUX_PORTS \
     --build-arg CRAFTER_VERSION \
     --build-arg CRAFTER_SERVICE \
     --build-arg CRAFTER_INSTALLER_CHECKSUM \
     --tag crafter-"$CRAFTER_SERVICE":"$CRAFTER_VERSION" .
 }
 
+execute() {
+  docker exec "$1" "$2" "$3"
+}
+
 CMS_HOME=${CMS_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
 
 DEFAULT_CRAFTER_VERSION=$(readProperty "$CMS_HOME"/cms.properties "default-crafter-version")
 
-ops=(run build)
+ops=(run build status backup restore upgrade selfupdate)
 services=(authoring delivery)
 
-if ! arrayContainsElement "$1" "${services[@]}"; then
+if ! arrayContainsElement "$1" "${ops[@]}"; then
   bad_usage
 fi
-if ! arrayContainsElement "$2" "${ops[@]}"; then
+if ! arrayContainsElement "$2" "${services[@]}"; then
   bad_usage
 fi
 
-service=$1
-operation=$2
-options_string=$3
-
-case $operation in
-build)
-  build "$service" "$options_string"
-  ;;
+case $1 in
 run)
-  run "$service" "$options_string"
+  start "run" "$2" "$3"
+  ;;
+debug)
+  start "debug" "$2" "$3"
+  ;;
+build)
+  build "$2" "$3"
+  ;;
+*)
+  execute "$2" "$1" "$3"
   ;;
 esac
 
