@@ -143,7 +143,7 @@ build() {
 }
 
 execute() {
-  docker exec "$1" "$2" "$3"
+  docker exec "$1" "exec" "/crafter-entrypoint.sh" "$2" "$3"
 }
 
 CMS_HOME=${CMS_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}

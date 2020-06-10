@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 runOrDebugCrafter() {
   if [ "$1" = 'debug' ]; then
@@ -95,10 +96,10 @@ elif [ "$1" = 'backup' ]; then
   $CRAFTER_BIN_DIR/crafter.sh backup
 elif [ "$1" = 'restore' ]; then
   if [ -z "$2" ]; then
-    echo "The backup path parameter was not specified"
+    echo "The backup file path was not specified"
     exit 1
   fi
   $CRAFTER_BIN_DIR/crafter.sh restore "$2"
 else
-  exec "$@"
+  "$@"
 fi
