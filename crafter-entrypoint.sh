@@ -22,7 +22,7 @@ runOrDebugCrafter() {
   echo "------------------------------------------------------------------------"
   echo "Starting Tomcat"
   echo "------------------------------------------------------------------------"
-  exec "$CRAFTER_BIN_DIR"/apache-tomcat/bin/catalina.sh $catalinaMode
+  "$CRAFTER_BIN_DIR"/apache-tomcat/bin/catalina.sh $catalinaMode
 }
 
 status() {
