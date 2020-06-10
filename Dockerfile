@@ -2,8 +2,8 @@ FROM openjdk:8-jre-slim-buster
 # Make sure pipes are considered to determine success, see: https://github.com/hadolint/hadolint/wiki/DL4006
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ARG AUX_PORTS
 ARG MAIN_PORT
+ARG AUX_PORTS
 ARG CRAFTER_SERVICE
 ARG CRAFTER_VERSION
 ARG CRAFTER_INSTALLER_CHECKSUM

@@ -135,6 +135,7 @@ build() {
   export CRAFTER_INSTALLER_CHECKSUM
 
   docker build \
+    --build-arg MAIN_PORT \
     --build-arg AUX_PORTS \
     --build-arg CRAFTER_VERSION \
     --build-arg CRAFTER_SERVICE \
