@@ -34,17 +34,44 @@ arrayContainsElement() {
 
 numberInput() {
   local label=$1
-  local sensitive=$2
+  local nullable=$2
+  local sensitive=$3
   local response
   if [ "${sensitive:-n}" = "y" ]; then
     read -r -s -p "$label" response
   else
     read -r -p "$label" response
   fi
-  local re='^[0-9]+$'
-  while ! [[ $response =~ $re ]]; do
+  if [ "${nullable:-y}" = 'n' ] || [ -n "$response" ]; then
+    local re='^[0-9]+$'
+    while ! [[ $response =~ $re ]] && [ "${nullable:-y}" = 'n' ] || [ -n "$response" ]; do
+      echo -e "\nInvalid response!"
+      echo "Must be a number"
+      echo -e "Please try again.\n"
+      if [ "${sensitive:-n}" = "y" ]; then
+        read -r -s -p "$label" response
+      else
+        read -r -p "$label" response
+      fi
+    done
+  fi
+  echo "$response"
+  return 0
+}
+
+textInput() {
+  local label=$1
+  local nullable=$2
+  local sensitive=$3
+  local response
+  if [ "${sensitive:-n}" = "y" ]; then
+    read -r -s -p "$label" response
+  else
+    read -r -p "$label" response
+  fi
+  while [ "${nullable:-y}" = 'n' ] && [ -z "$response" ]; do
     echo -e "\nInvalid response!"
-    echo "Must be a number"
+    echo "Must not be empty"
     echo -e "Please try again.\n"
     if [ "${sensitive:-n}" = "y" ]; then
       read -r -s -p "$label" response
@@ -56,35 +83,29 @@ numberInput() {
   return 0
 }
 
-textInput() {
-  local label=$1
-  local sensitive=$2
-  local response
-  if [ "${sensitive:-n}" = "y" ]; then
-    read -r -s -p "$label" response
-  else
-    read -r -p "$label" response
-  fi
-  echo "$response"
-  return 0
-}
-
 validatableInput() {
   local label=$1
-  local sensitive=$2
-  local valid_values=("${@:3}")
+  local nullable=$2
+  local sensitive=$3
+  local valid_values=("${@:4}")
   local response
-  response=$(textInput "$label" "$sensitive")
-  arrayContainsElement "$response" "${valid_values[@]}"
-  local RTN=$?
-  while [ $RTN -ne 0 ]; do
-    echo -e "\nInvalid response!"
-    echo "Must be one of [${valid_values[*]}]"
-    echo -e "Please try again.\n"
-    response=$(textInput "$label" "$sensitive")
+  response=$(textInput "$label" "$nullable" "$sensitive")
+  if [ -n "$response" ]; then
     arrayContainsElement "$response" "${valid_values[@]}"
-    RTN=$?
-  done
+    local RTN=$?
+    while [ $RTN -ne 0 ]; do
+      echo -e "\nInvalid response!"
+      echo "Must be one of [${valid_values[*]}]"
+      echo -e "Please try again.\n"
+      response=$(textInput "$label" "$nullable" "$sensitive")
+      if [ -n "$response" ]; then
+        arrayContainsElement "$response" "${valid_values[@]}"
+        RTN=$?
+      else
+        RTN=0
+      fi
+    done
+  fi
   echo "$response"
   return 0
 }
@@ -99,13 +120,15 @@ enumerateOptions() {
 }
 
 run() {
+  local yes_no_array=(yes no)
   local available_versions
   available_versions=$(docker images |
     awk -v image_prefix="${DOCKER_IMAGE_PREFIX}-${SERVICE}" '{  if($1 == image_prefix) {printf("%s ", $2)} }')
   local version
-  version=$(textInput "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "n")
+  version=$(textInput "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "y" "n")
   VERSION=${version:-$DEFAULT_CRAFTER_VERSION}
-  if ! arrayContainsElement "$VERSION" "${available_versions[@]}"; then
+  # shellcheck disable=SC2068
+  if ! arrayContainsElement "$VERSION" ${available_versions[@]}; then
     echo -e "\nERROR:- Invalid version $version"
     echo -e "Could not find an image for version $VERSION"
     echo -e "Try building an image for version $VERSION using the command <$(basename "$0") build>\n"
@@ -113,38 +136,51 @@ run() {
   fi
 
   echo "Starting container from image: ${DOCKER_IMAGE_PREFIX}-${SERVICE}:${VERSION}"
-  port=${port:-8080}
-  es_port=${es_port:-9201}
-  deployer_port=${deployer_port:-9191}
-  es_debug_port=${es_debug_port:-4004}
-  engine_debug_port=${engine_debug_port:-8000}
-  deployer_debug_port=${deployer_debug_port:-5005}
-  echo "*** port=${port} | debug port=${engine_debug_port} ***"
-  sleep 1s
-  if [ "${debug:-no}" = 'yes' ]; then
-    docker run --rm \
-      -p "${port}":8080 \
-      -p "${es_port}":9201 \
-      -p "${deployer_port}":9191 \
-      -p "${es_debug_port}":4004 \
-      -p "${engine_debug_port}":8000 \
-      -p "${deployer_debug_port}":5005 \
-      "${DOCKER_IMAGE_PREFIX}-${SERVICE}:${VERSION}" "debug"
+  port=$(numberInput "Map Crafter engine port to (default = 8080): " "y" "n")
+  developer_mode=$(validatableInput "Developer mode? (default = no): " "y" "n" "${yes_no_array[@]}")
+  if [ "${developer_mode:-no}" = 'yes' ]; then
+    debug=$(validatableInput "Debug? (default = no): " "y" "n" "${yes_no_array[@]}")
+    es_port=$(numberInput "Map Elasticsearch port to (default = 9201): " "y" "n")
+    deployer_port=$(numberInput "Map Crafter deployer port to (default = 9191): " "y" "n")
+    crafter_logs_dir=$(textInput "Map Crafter logs directory to: " "n" "n")
+    crafter_data_dir=$(textInput "Map Crafter data directory to: " "n" "n")
+    crafter_backup_dir=$(textInput "Map Crafter backup directory to: " "n" "n")
+
+    if [ "${debug:-no}" = 'yes' ]; then
+      es_debug_port=$(numberInput "Map Elasticsearch debug port to (default = 4004): " "y" "n")
+      engine_debug_port=$(numberInput "Map Crafter engine debug port to (default = 8000): " "y" "n")
+      deployer_debug_port=$(numberInput "Map Crafter deployer debug port to (default = 5005): " "y" "n")
+      docker run --rm \
+        -p "${port:-8080}":8080 \
+        -p "${es_port:-9201}":9201 \
+        -p "${deployer_port:-9191}":9191 \
+        -p "${es_debug_port:-4004}":4004 \
+        -p "${engine_debug_port:-8000}":8000 \
+        -p "${deployer_debug_port:-5005}":5005 \
+        -v "$crafter_logs_dir":/opt/crafter/logs \
+        -v "$crafter_data_dir":/opt/crafter/data \
+        -v "$crafter_backup_dir":/opt/crafter/backups \
+        "${DOCKER_IMAGE_PREFIX}-${SERVICE}:${VERSION}" "debug"
+    else
+      docker run --rm \
+        -p "${port:-8080}":8080 \
+        -p "${es_port:-9201}":9201 \
+        -p "${deployer_port:-9191}":9191 \
+        -v "$crafter_logs_dir":/opt/crafter/logs \
+        -v "$crafter_data_dir":/opt/crafter/data \
+        -v "$crafter_backup_dir":/opt/crafter/backups \
+        "${DOCKER_IMAGE_PREFIX}-${SERVICE}:${VERSION}"
+    fi
   else
     docker run --rm \
-      -p "${port}":8080 \
-      -p "${es_port}":9201 \
-      -p "${deployer_port}":9191 \
-      -p "${es_debug_port}":4004 \
-      -p "${engine_debug_port}":8000 \
-      -p "${deployer_debug_port}":5005 \
+      -p "${port:-8080}":8080 \
       "${DOCKER_IMAGE_PREFIX}-${SERVICE}:${VERSION}"
   fi
 }
 
 build() {
   local version
-  version=$(textInput "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "n")
+  version=$(textInput "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "y" "n")
   VERSION=${version:-$DEFAULT_CRAFTER_VERSION}
   export VERSION
 

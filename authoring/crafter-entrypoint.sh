@@ -77,6 +77,37 @@ crafterModuleStatus() {
   fi
 }
 
+shutdown() {
+  echo "------------------------------------------------------------------------"
+  echo "Stopping Tomcat"
+  echo "------------------------------------------------------------------------"
+  "$CRAFTER_BIN_DIR"/apache-tomcat/bin/shutdown.sh 10 -force
+  cd "$DEPLOYER_HOME"
+  echo "------------------------------------------------------------------------"
+  echo "Stopping Deployer"
+  echo "------------------------------------------------------------------------"
+  "$DEPLOYER_HOME"/deployer.sh stop
+  cd "$CRAFTER_BIN_DIR"
+  echo "------------------------------------------------------------------------"
+  echo "Stopping Elasticsearch"
+  echo "------------------------------------------------------------------------"
+  if [ -s "$ES_PID" ]; then
+    if pgrep -F "$ES_PID" >/dev/null; then
+      killPID "$ES_PID"
+    fi
+  else
+    pid=$(pidOf "$ES_PORT")
+    if [ -n "$pid" ]; then
+      echo "$pid" >"$ES_PID"
+      # No pid file but we found the process
+      killPID "$ES_PID"
+    fi
+    echo "Elasticsearch already shutdown or pid $ES_PID file not found"
+  fi
+}
+
+trap shutdown EXIT
+
 export CRAFTER_HOME=/opt/crafter
 export CRAFTER_BIN_DIR=$CRAFTER_HOME/bin
 export CRAFTER_BACKUPS_DIR=$CRAFTER_HOME/backups
