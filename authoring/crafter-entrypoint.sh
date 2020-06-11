@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-set -x
+# set -x
 
 runOrDebugCrafter() {
   if [ "$1" = 'debug' ]; then

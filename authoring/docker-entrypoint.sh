@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-set -x
+# set -x
 
 if [ "$1" = 'run' ]; then
   exec /crafter-entrypoint.sh run
