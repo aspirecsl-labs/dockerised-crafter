@@ -1,5 +1,5 @@
 #!/bin/bash
-#set -x
+set -e
 
 usage() {
   echo -e "\nUsage: ${MAIN_COMMAND} run|exec|build\n" >&2

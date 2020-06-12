@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 MAIN_COMMAND=$(basename "$0")
 export MAIN_COMMAND
