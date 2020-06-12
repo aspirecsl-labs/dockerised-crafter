@@ -2,7 +2,7 @@
 #set -x
 
 usage() {
-  echo -e "\nUsage: $(basename "$0") run|exec|build\n" >&2
+  echo -e "\nUsage: ${MAIN_COMMAND} run|exec|build\n" >&2
   exit 1
 }
 
@@ -119,14 +119,12 @@ run() {
   local available_versions
   available_versions=$(docker images |
     awk -v image_prefix="${DOCKER_IMAGE_PREFIX}-${SERVICE}" '{  if($1 == image_prefix) {printf("%s ", $2)} }')
-  local version
-  version=$(input "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "y" "n")
-  VERSION=${version:-$DEFAULT_CRAFTER_VERSION}
+  VERSION=${CRAFTER_VERSION:-$DEFAULT_CRAFTER_VERSION}
   # shellcheck disable=SC2068
   if ! arrayContainsElement "$VERSION" ${available_versions[@]}; then
-    echo -e "\nERROR:- Invalid version $version" >&2
+    echo -e "\nERROR:- Invalid version $VERSION" >&2
     echo -e "Could not find an image for version $VERSION" >&2
-    echo -e "Try building an image for version $VERSION using the command <$(basename "$0") build>\n" >&2
+    echo -e "Try building an image for version $VERSION using the command <$MAIN_COMMAND build>\n" >&2
     exit 1
   fi
 
@@ -174,9 +172,7 @@ run() {
 }
 
 build() {
-  local version
-  version=$(input "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "y" "n")
-  VERSION=${version:-$DEFAULT_CRAFTER_VERSION}
+  VERSION=${CRAFTER_VERSION:-$DEFAULT_CRAFTER_VERSION}
   export VERSION
 
   INSTALLER_CHECKSUM=$(readProperty "$GLOBAL_PROPERTIES" "${SERVICE}-${VERSION}")
@@ -189,25 +185,32 @@ build() {
 }
 
 executeCommand() {
-  local version
-  version=$(input "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "y" "n")
-  VERSION=${version:-$DEFAULT_CRAFTER_VERSION}
-  echo -e "\nMore than one container found for version $VERSION"
-  echo -e "\n"
-  docker container ls --format "table {{.ID}}\t{{.CreatedAt}}\t{{.Status}}" --filter="ancestor=crafter-cms-authoring:3.1.5"
-  echo -e "\n"
-  container_id=$(input "Specify the required container id from the list above: " "n" "n")
-  local allowed_commands=(port login status backup restore upgrade)
-  command=$(validatableInput "Command: (available commands = ${allowed_commands[*]}): " "n" "n" "${allowed_commands[@]}")
-  if [ "$command" = 'port' ]; then
-    docker port "$container_id"
+  VERSION=${CRAFTER_VERSION:-$DEFAULT_CRAFTER_VERSION}
+  cids=$(docker container ls --format "{{.ID}}" --filter="ancestor=crafter-cms-authoring:3.1.5")
+  if [ ${#cids[@]} -eq 1 ]; then
+    cid=${cids[0]}
   else
-    if [ "$command" = 'login' ]; then
-      command=/bin/bash
-    fi
-    docker exec "$container_id" "/docker-entrypoint.sh" "$command"
+    echo -e "\nMore than one container found for version $VERSION"
+    echo -e "\n"
+    docker container ls --format "table {{.ID}}\t{{.CreatedAt}}\t{{.Status}}" --filter="ancestor=${DOCKER_IMAGE_PREFIX}-${SERVICE}:${VERSION}"
+    echo -e "\n"
+    cid=$(input "Specify the required container id from the list above: " "n" "n")
+  fi
+  local allowed_commands=(port login status backup restore upgrade)
+  command=$(validatableInput "Enter a command (available commands are:- ${allowed_commands[*]}): " "n" "n" "${allowed_commands[@]}")
+  if [ "$command" = 'port' ]; then
+    echo -e "\n"
+    docker port "$cid"
+    echo -e "\n"
+  elif [ "$command" = 'login' ]; then
+    command=/bin/bash
+    docker exec -it "$cid" "/docker-entrypoint.sh" "$command"
+  else
+    docker exec "$cid" "/docker-entrypoint.sh" "$command"
   fi
 }
+
+MAIN_COMMAND=${MAIN_COMMAND:-$(basename "$0")}
 
 SERVICE=authoring
 DOCKER_IMAGE_PREFIX="crafter-cms"

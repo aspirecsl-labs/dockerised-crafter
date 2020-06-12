@@ -77,29 +77,6 @@ crafterModuleStatus() {
   fi
 }
 
-shutdown() {
-  echo "------------------------------------------------------------------------"
-  echo "Stopping Tomcat"
-  echo "------------------------------------------------------------------------"
-  "$CRAFTER_BIN_DIR"/apache-tomcat/bin/shutdown.sh 10 -force
-  cd "$DEPLOYER_HOME"
-  echo "------------------------------------------------------------------------"
-  echo "Stopping Deployer"
-  echo "------------------------------------------------------------------------"
-  "$DEPLOYER_HOME"/deployer.sh stop
-  cd "$CRAFTER_BIN_DIR"
-  echo "------------------------------------------------------------------------"
-  echo "Stopping Elasticsearch"
-  echo "------------------------------------------------------------------------"
-  pkill -15 -F "$ES_PID"
-  sleep 3
-  if pgrep -F "$ES_PID" >/dev/null; then
-    pkill -9 -F "$ES_PID"
-  fi
-}
-
-trap shutdown EXIT
-
 export CRAFTER_HOME=/opt/crafter
 export CRAFTER_BIN_DIR=$CRAFTER_HOME/bin
 export CRAFTER_BACKUPS_DIR=$CRAFTER_HOME/backups
