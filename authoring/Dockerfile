@@ -13,7 +13,6 @@ ENV DOWNLOAD_LINK "https://downloads.craftercms.org/$CRAFTER_VERSION/crafter-cms
 COPY sudoers /
 COPY docker-entrypoint.sh /
 COPY docker-healthcheck.sh /
-COPY crafter-entrypoint.sh /
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git && \
@@ -55,12 +54,10 @@ RUN apt-get update && \
         chmod 440 /etc/sudoers && \
         chown root:root /etc/sudoers && \
         chmod ugo+x /docker-entrypoint.sh \
-                    /docker-healthcheck.sh \
-                    /crafter-entrypoint.sh && \
+                    /docker-healthcheck.sh && \
         chown -R crafter:crafter /opt/crafter \
                                  /docker-entrypoint.sh \
-                                 /docker-healthcheck.sh \
-                                 /crafter-entrypoint.sh; \
+                                 /docker-healthcheck.sh; \
     fi; \
     rm -rf /var/lib/apt/lists/* $DOWNLOAD_TO
 

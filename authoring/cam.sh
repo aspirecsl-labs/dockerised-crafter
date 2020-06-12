@@ -2,7 +2,7 @@
 #set -x
 
 usage() {
-  echo -e "\nUsage: $(basename "$0") run|exec|build\n"
+  echo -e "\nUsage: $(basename "$0") run|exec|build\n" >&2
   exit 1
 }
 
@@ -32,34 +32,7 @@ arrayContainsElement() {
   return 1
 }
 
-numberInput() {
-  local label=$1
-  local nullable=$2
-  local sensitive=$3
-  local response
-  if [ "${sensitive:-n}" = "y" ]; then
-    read -r -s -p "$label" response
-  else
-    read -r -p "$label" response
-  fi
-  if [ "${nullable:-y}" = 'n' ] || [ -n "$response" ]; then
-    local re='^[0-9]+$'
-    while ! [[ $response =~ $re ]] && [ "${nullable:-y}" = 'n' ] || [ -n "$response" ]; do
-      echo -e "\nInvalid response!"
-      echo "Must be a number"
-      echo -e "Please try again.\n"
-      if [ "${sensitive:-n}" = "y" ]; then
-        read -r -s -p "$label" response
-      else
-        read -r -p "$label" response
-      fi
-    done
-  fi
-  echo "$response"
-  return 0
-}
-
-textInput() {
+input() {
   local label=$1
   local nullable=$2
   local sensitive=$3
@@ -70,9 +43,9 @@ textInput() {
     read -r -p "$label" response
   fi
   while [ "${nullable:-y}" = 'n' ] && [ -z "$response" ]; do
-    echo -e "\nInvalid response!"
-    echo "Must not be empty"
-    echo -e "Please try again.\n"
+    echo -e "\nInvalid response!" >&2
+    echo "Must not be empty" >&2
+    echo -e "Please try again.\n" >&2
     if [ "${sensitive:-n}" = "y" ]; then
       read -r -s -p "$label" response
     else
@@ -83,21 +56,43 @@ textInput() {
   return 0
 }
 
+numberInput() {
+  local label=$1
+  local nullable=$2
+  local sensitive=$3
+  local response
+  response=$(input "$label" "$nullable" "$sensitive")
+  if [ -n "$response" ]; then
+    local re='^[0-9]+$'
+    while ! [[ $response =~ $re ]]; do
+      echo -e "\nInvalid response!" >&2
+      echo "Must be a number" >&2
+      echo -e "Please try again.\n" >&2
+      response=$(input "$label" "$nullable" "$sensitive")
+      if [ -z "$response" ]; then
+        break
+      fi
+    done
+  fi
+  echo "$response"
+  return 0
+}
+
 validatableInput() {
   local label=$1
   local nullable=$2
   local sensitive=$3
   local valid_values=("${@:4}")
   local response
-  response=$(textInput "$label" "$nullable" "$sensitive")
+  response=$(input "$label" "$nullable" "$sensitive")
   if [ -n "$response" ]; then
     arrayContainsElement "$response" "${valid_values[@]}"
     local RTN=$?
     while [ $RTN -ne 0 ]; do
-      echo -e "\nInvalid response!"
-      echo "Must be one of [${valid_values[*]}]"
-      echo -e "Please try again.\n"
-      response=$(textInput "$label" "$nullable" "$sensitive")
+      echo -e "\nInvalid response!" >&2
+      echo "Must be one of [${valid_values[*]}]" >&2
+      echo -e "Please try again.\n" >&2
+      response=$(input "$label" "$nullable" "$sensitive")
       if [ -n "$response" ]; then
         arrayContainsElement "$response" "${valid_values[@]}"
         RTN=$?
@@ -125,13 +120,13 @@ run() {
   available_versions=$(docker images |
     awk -v image_prefix="${DOCKER_IMAGE_PREFIX}-${SERVICE}" '{  if($1 == image_prefix) {printf("%s ", $2)} }')
   local version
-  version=$(textInput "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "y" "n")
+  version=$(input "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "y" "n")
   VERSION=${version:-$DEFAULT_CRAFTER_VERSION}
   # shellcheck disable=SC2068
   if ! arrayContainsElement "$VERSION" ${available_versions[@]}; then
-    echo -e "\nERROR:- Invalid version $version"
-    echo -e "Could not find an image for version $VERSION"
-    echo -e "Try building an image for version $VERSION using the command <$(basename "$0") build>\n"
+    echo -e "\nERROR:- Invalid version $version" >&2
+    echo -e "Could not find an image for version $VERSION" >&2
+    echo -e "Try building an image for version $VERSION using the command <$(basename "$0") build>\n" >&2
     exit 1
   fi
 
@@ -142,9 +137,9 @@ run() {
     debug=$(validatableInput "Debug? (default = no): " "y" "n" "${yes_no_array[@]}")
     es_port=$(numberInput "Map Elasticsearch port to (default = 9201): " "y" "n")
     deployer_port=$(numberInput "Map Crafter deployer port to (default = 9191): " "y" "n")
-    crafter_logs_dir=$(textInput "Map Crafter logs directory to: " "n" "n")
-    crafter_data_dir=$(textInput "Map Crafter data directory to: " "n" "n")
-    crafter_backup_dir=$(textInput "Map Crafter backup directory to: " "n" "n")
+    crafter_logs_dir=$(input "Map Crafter logs directory to: " "n" "n")
+    crafter_data_dir=$(input "Map Crafter data directory to: " "n" "n")
+    crafter_backup_dir=$(input "Map Crafter backup directory to: " "n" "n")
 
     if [ "${debug:-no}" = 'yes' ]; then
       es_debug_port=$(numberInput "Map Elasticsearch debug port to (default = 4004): " "y" "n")
@@ -180,7 +175,7 @@ run() {
 
 build() {
   local version
-  version=$(textInput "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "y" "n")
+  version=$(input "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "y" "n")
   VERSION=${version:-$DEFAULT_CRAFTER_VERSION}
   export VERSION
 
@@ -194,12 +189,24 @@ build() {
 }
 
 executeCommand() {
-  local allowed_commands=(status backup restore upgrade selfupdate)
-  #  if [ "$2" = 'exec' ]; then
-  #    docker exec -it "$1" "$3"
-  #  else
-  #    docker exec "$1" "/crafter-entrypoint.sh" "$2" "$3"
-  #  fi
+  local version
+  version=$(input "Crafter Version (default = $DEFAULT_CRAFTER_VERSION): " "y" "n")
+  VERSION=${version:-$DEFAULT_CRAFTER_VERSION}
+  echo -e "\nMore than one container found for version $VERSION"
+  echo -e "\n"
+  docker container ls --format "table {{.ID}}\t{{.CreatedAt}}\t{{.Status}}" --filter="ancestor=crafter-cms-authoring:3.1.5"
+  echo -e "\n"
+  container_id=$(input "Specify the required container id from the list above: " "n" "n")
+  local allowed_commands=(port login status backup restore upgrade)
+  command=$(validatableInput "Command: (available commands = ${allowed_commands[*]}): " "n" "n" "${allowed_commands[@]}")
+  if [ "$command" = 'port' ]; then
+    docker port "$container_id"
+  else
+    if [ "$command" = 'login' ]; then
+      command=/bin/bash
+    fi
+    docker exec "$container_id" "/docker-entrypoint.sh" "$command"
+  fi
 }
 
 SERVICE=authoring
