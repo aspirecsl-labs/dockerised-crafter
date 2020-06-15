@@ -26,10 +26,10 @@ runOrDebugCrafter() {
 
 status() {
   elasticsearchStatus
-  crafterModuleStatus "Crafter Deployer" "$DEPLOYER_PORT" "" "1" "$DEPLOYER_PID"
   crafterModuleStatus "Crafter Engine" "$TOMCAT_HTTP_PORT" "" "1"
   crafterModuleStatus "Crafter Studio" "$TOMCAT_HTTP_PORT" "/studio" "2"
   crafterModuleStatus "Crafter Search" "$TOMCAT_HTTP_PORT" "/crafter-search" "1"
+  crafterModuleStatus "Crafter Deployer" "$DEPLOYER_PORT" "" "1" "$DEPLOYER_PID"
 }
 
 elasticsearchStatus() {
@@ -81,7 +81,7 @@ export CRAFTER_BIN_DIR=$CRAFTER_HOME/bin
 export CRAFTER_BACKUPS_DIR=$CRAFTER_HOME/backups
 
 # shellcheck source=/opt/crafter/bin/crafter-setenv.sh
-. "${CRAFTER_BIN_DIR}/crafter-setenv.sh"
+source "${CRAFTER_BIN_DIR}/crafter-setenv.sh"
 
 if [ "$1" = 'run' ]; then
   runOrDebugCrafter "run"
@@ -89,24 +89,25 @@ elif [ "$1" = 'debug' ]; then
   runOrDebugCrafter "debug"
 elif [ "$1" = 'status' ]; then
   status
+elif [ "$1" = 'version' ]; then
+  echo "Crafter Authoring Version $CRAFTER_VERSION"
 elif [ "$1" = 'upgrade' ]; then
   echo "Coming soon..."
 elif [ "$1" = 'backup' ]; then
   $CRAFTER_BIN_DIR/crafter.sh backup
+elif [ "$1" = 'list-backups' ]; then
+  echo -e "\n"
+  ls -l $CRAFTER_BACKUPS_DIR/crafter-authoring-backup*
+  echo -e "\n"
 elif [ "$1" = 'restore' ]; then
-  backup_to_apply=/opt/crafter/backups/backup.apply
-  if [ -s "$backup_to_apply" ]; then
-    ts=$(date +%Y%m%d-%H%M%S)
-    backup_applied=/opt/crafter/backups/backup.applied."$ts"
-    if $CRAFTER_BIN_DIR/crafter.sh restore $backup_to_apply; then
-      mv -f $backup_to_apply "$backup_applied"
-    else
-      echo -e "\Backup restoration failed!!!\n" >&2
-    fi
-  else
-    echo -e "\nNo backup.apply file found!!!\n" >&2
+  if [ -z "$2" ]; then
+    echo -e "\nThe backup file path was not specified"
+    echo -e "Try again by specifying a backup file path from the following list:-\n"
+    ls -l $CRAFTER_BACKUPS_DIR/crafter-authoring-backup*
+    echo -e "\n"
     exit 1
   fi
+  exec /crafter-entrypoint.sh restore "$2"
 else
   exec "$@"
 fi
