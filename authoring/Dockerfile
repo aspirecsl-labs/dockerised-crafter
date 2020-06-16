@@ -1,8 +1,8 @@
-FROM alpine
+FROM openjdk:8-jre-slim-buster
 LABEL maintainer="labs@aspirecsl.com"
 
 # Make sure pipes are considered to determine success, see: https://github.com/hadolint/hadolint/wiki/DL4006
-SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG VERSION
 ARG DOWNLOAD_LINK
@@ -15,22 +15,22 @@ COPY sudoers /
 COPY docker-entrypoint.sh /
 COPY docker-healthcheck.sh /
 
-RUN DOWNLOAD_TO="/tmp/crafter.tar.gz" && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    apt-get install -y --no-install-recommends vim && \
+    apt-get install -y --no-install-recommends bash && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends lsof && \
+    apt-get install -y --no-install-recommends sudo && \
+    apt-get install -y --no-install-recommends rsync && \
+    apt-get install -y --no-install-recommends procps && \
+    apt-get install -y --no-install-recommends apache2 && \
+    apt-get install -y --no-install-recommends libaio1 && \
+    apt-get install -y --no-install-recommends iproute2 && \
+    apt-get install -y --no-install-recommends libncurses5 && \
+    apt-get install -y --no-install-recommends openssh-client && \
+    DOWNLOAD_TO="/tmp/crafter.tar.gz" && \
     SHA512_DOWNLOAD_TO="/tmp/crafter.tar.gz.sha512" && \
-    apk add --no-cache git && \
-    apk add --no-cache vim && \
-    apk add --no-cache bash && \
-    apk add --no-cache curl && \
-    apk add --no-cache lsof && \
-    apk add --no-cache sudo && \
-    apk add --no-cache rsync && \
-    apk add --no-cache libaio && \
-    apk add --no-cache procps && \
-    apk add --no-cache apache2 && \
-    apk add --no-cache iproute2 && \
-    apk add --no-cache ncurses5 && \
-    apk add --no-cache openssh-client && \
-    apk add --no-cache openjdk8-jre-base && \
     echo "Downloading Crafter Authoring $CRAFTER_VERSION" && \
     curl $DOWNLOAD_LINK --output $DOWNLOAD_TO && \
     curl $SHA512_DOWNLOAD_LINK --output ${SHA512_DOWNLOAD_TO} && \
@@ -43,19 +43,14 @@ RUN DOWNLOAD_TO="/tmp/crafter.tar.gz" && \
         echo "" && \
         exit 1; \
     else \
-        mkdir -p /opt/crafter \
-                 /opt/crafter/bin \
-                 /opt/crafter/backups \
-                 /opt/crafter/temp/tomcat \
-                 /opt/crafter/logs/tomcat \
-                 /opt/crafter/logs/deployer \
-                 /opt/crafter/data/indexes-es \
-                 /opt/crafter/logs/elasticsearch && \
+        mkdir -p /opt/crafter/bin \
+                 /opt/crafter/temp/tomcat && \
         # adds crafter user and group to run crafter services
-        addgroup -S crafter && adduser -S crafter -G crafter && \
+        groupadd -g 1000 -r crafter && \
+        useradd -r -u 1000 -g crafter crafter && \
         tar -x -v -f $DOWNLOAD_TO && \
-        cp -af crafter/* /opt/crafter && \
-        rm -fR crafter && \
+        cp -fr crafter/* /opt/crafter && \
+        rm -fr crafter && \
         cp /sudoers /etc && \
         chmod 440 /etc/sudoers && \
         chown root:root /etc/sudoers && \
@@ -64,7 +59,7 @@ RUN DOWNLOAD_TO="/tmp/crafter.tar.gz" && \
         chown -R crafter:crafter /opt/crafter \
                                  /docker-entrypoint.sh \
                                  /docker-healthcheck.sh && \
-        rm -fR $DOWNLOAD_TO ${SHA512_DOWNLOAD_TO}; \
+        rm -fr /var/lib/apt/lists/* $DOWNLOAD_TO ${SHA512_DOWNLOAD_TO}; \
     fi
 
 EXPOSE \
@@ -72,10 +67,6 @@ EXPOSE \
     80 \
     # Apache HTTPS port
     443 \
-    # JPDA debug port for Elasticsearch
-    4004 \
-    # JPDA debug port for Crafter Deployer
-    5005 \
     # JPDA debug port for Crafter Engine
     8000 \
     # Crafter engine port

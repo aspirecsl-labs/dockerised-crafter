@@ -1,27 +1,18 @@
-readProperty() {
-  if [[ $# -ne 2 || ! -r $1 ]]; then
-    echo "UNDEFINED"
-    return 1
-  fi
-  PROP_VAL=$(awk -F "=" \
-    -v PROP_KEY="$2" \
-    '{
-                   if ($1 == PROP_KEY)
-                   {
-                     print $2;
-                     exit;
-                   }
-                }' "$1")
-  echo "${PROP_VAL:-UNDEFINED}"
-  return 0
-}
-
 arrayContainsElement() {
   local element
   for element in "${@:2}"; do
     [[ "$element" == "$1" ]] && return 0
   done
   return 1
+}
+
+enumerateOptions() {
+  IFS="," read -r -a options <<<"$1"
+  for option in "${options[@]}"; do
+    k=$(echo "$option" | cut -d"=" -f1 | tr '[:upper:]' '[:lower:]')
+    v=$(echo "$option" | cut -d"=" -f2)
+    eval "$k"="$v"
+  done
 }
 
 input() {
@@ -67,6 +58,24 @@ numberInput() {
     done
   fi
   echo "$response"
+  return 0
+}
+
+readProperty() {
+  if [[ $# -ne 2 || ! -r $1 ]]; then
+    echo "UNDEFINED"
+    return 1
+  fi
+  PROP_VAL=$(awk -F "=" \
+    -v PROP_KEY="$2" \
+    '{
+                   if ($1 == PROP_KEY)
+                   {
+                     print $2;
+                     exit;
+                   }
+                }' "$1")
+  echo "${PROP_VAL:-UNDEFINED}"
   return 0
 }
 

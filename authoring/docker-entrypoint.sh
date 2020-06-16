@@ -3,17 +3,14 @@ set -e
 
 runOrDebugCrafter() {
   if [ "$1" = 'debug' ]; then
-    deployerMode="debug"
     catalinaMode="jpda run"
-    export ES_JAVA_OPTS="$ES_JAVA_OPTS -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=4004"
   else
-    deployerMode="start"
     catalinaMode="run"
   fi
   echo "------------------------------------------------------------------------"
   echo "Starting Deployer"
   echo "------------------------------------------------------------------------"
-  "$DEPLOYER_HOME"/deployer.sh $deployerMode
+  "$DEPLOYER_HOME"/deployer.sh start
   echo "------------------------------------------------------------------------"
   echo "Starting Elasticsearch"
   echo "------------------------------------------------------------------------"
@@ -95,7 +92,7 @@ elif [ "$1" = 'upgrade' ]; then
   echo "Coming soon..."
 elif [ "$1" = 'backup' ]; then
   $CRAFTER_BIN_DIR/crafter.sh backup
-elif [ "$1" = 'list-backups' ]; then
+elif [ "$1" = 'show-backups' ]; then
   echo -e "\n"
   ls -l $CRAFTER_BACKUPS_DIR/crafter-authoring-backup*
   echo -e "\n"
@@ -103,7 +100,7 @@ elif [ "$1" = 'restore' ]; then
   if [ -z "$2" ]; then
     echo -e "\nThe backup file path was not specified"
     echo -e "Try again by specifying a backup file path from the following list:-\n"
-    ls -l $CRAFTER_BACKUPS_DIR/crafter-authoring-backup*
+    ls -ltr $CRAFTER_BACKUPS_DIR/crafter-authoring-backup*
     echo -e "\n"
     exit 1
   fi
