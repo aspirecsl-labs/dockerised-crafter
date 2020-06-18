@@ -26,7 +26,7 @@ if [ -n "$1" ]; then
 fi
 
 cd "${CRAFTER_HOME}/${INTERFACE}"
-IMAGE=$(readProperty "./crafter-release" "VERSION")
+IMAGE=$(readProperty "./crafter-release" "IMAGE")
 
 VERSION=$(readProperty "./crafter-release" "VERSION")
 export VERSION
