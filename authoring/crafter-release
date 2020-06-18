@@ -1,0 +1,6 @@
+NAME=Crafter CMS
+SUBSYSTEM=Authoring
+VERSION=3.1.5
+IMAGE=aspirecsl/crafter-cms-authoring
+BUNDLE_URL=https://downloads.craftercms.org/3.1.5/crafter-cms-authoring-3.1.5.tar.gz
+BUNDLE_SHA512_URL=https://downloads.craftercms.org/3.1.5/crafter-cms-authoring-3.1.5.tar.gz.sha512

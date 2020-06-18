@@ -29,14 +29,14 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends openssh-client && \
     DOWNLOAD_TO="/tmp/crafter.tar.gz" && \
     SHA512_DOWNLOAD_TO="/tmp/crafter.tar.gz.sha512" && \
-    echo "Downloading Crafter Authoring $VERSION" && \
+    echo "Downloading Crafter Delivery $VERSION" && \
     curl $DOWNLOAD_LINK --output $DOWNLOAD_TO && \
     curl $SHA512_DOWNLOAD_LINK --output ${SHA512_DOWNLOAD_TO} && \
     DOWNLOADED_INSTALLER_CHECKSUM=$(sha512sum $DOWNLOAD_TO | awk '{print($1)}') && \
     EXPECTED_INSTALLER_CHECKSUM=$(cat ${SHA512_DOWNLOAD_TO} | awk '{print($1)}') && \
     if [ "$EXPECTED_INSTALLER_CHECKSUM" != "$DOWNLOADED_INSTALLER_CHECKSUM" ]; \
     then \
-        echo "Checksum mismatch on the downloaded crafter authoring bundle! exiting..." && \
+        echo "Checksum mismatch on the downloaded crafter delivery bundle! exiting..." && \
         echo "" && \
         exit 1; \
     else \
@@ -70,11 +70,11 @@ EXPOSE \
     # JPDA debug port for Crafter Engine
     8000 \
     # Crafter engine port
-    8080 \
+    9080 \
     # Crafter deployer port
-    9191 \
+    9192 \
     # Elasticsearch port
-    9201
+    9202
 
 
 USER crafter

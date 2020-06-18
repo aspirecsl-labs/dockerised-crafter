@@ -3,17 +3,13 @@ set -e
 
 usage() {
   echo ""
-  echo "Usage: $(basename "$0") INTERFACE CONTEXT command"
+  echo "Usage: $(basename "$0") INTERFACE"
   echo ""
-  echo "Manages Crafter authoring and delivery images and containers"
+  echo "Manage Crafter images and containers"
   echo ""
   echo "Interfaces:"
   echo "    authoring Manage Crafter authoring images and containers"
   echo "    delivery  Manage Crafter delivery images and containers"
-  echo ""
-  echo "Contexts:"
-  echo "    container Manage Crafter containers for the selected 'interface'"
-  echo "    image     Manage Crafter images for the selected 'interface'"
   echo ""
   echo "Run '$(basename "$0") INTERFACE --help' for more information on how to manage an interface."
 }
@@ -29,13 +25,8 @@ authoring | delivery)
   export INTERFACE
   CMD_PREFIX="crafter $1"
   export CMD_PREFIX
-  if [ -x "${CRAFTER_SCRIPTS_HOME}/${INTERFACE}/interface.sh" ]; then
-    # shellcheck disable=SC2068
-    "${CRAFTER_SCRIPTS_HOME}/${INTERFACE}/interface.sh" ${@:2}
-  else
-    # shellcheck disable=SC2068
-    "${CRAFTER_SCRIPTS_HOME}/common/interface.sh" ${@:2}
-  fi
+  # shellcheck disable=SC2068
+  "${CRAFTER_SCRIPTS_HOME}/interface.sh" ${@:2}
   ;;
 *)
   usage

@@ -3,9 +3,9 @@ set -e
 
 usage() {
   echo ""
-  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} CONTEXT command"
+  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} CONTEXT"
   echo ""
-  echo "Manages Crafter ${INTERFACE} images and containers"
+  echo "Manage Crafter ${INTERFACE} images and containers"
   echo ""
   echo "Contexts:"
   echo "    container Manage Crafter ${INTERFACE} containers"
@@ -28,13 +28,8 @@ image | container)
   export CONTEXT
   CMD_PREFIX="${CMD_PREFIX:-$(basename "$0")} $1"
   export CMD_PREFIX
-  if [ -x "${CRAFTER_SCRIPTS_HOME}/${INTERFACE}/${CONTEXT}.sh" ]; then
-    # shellcheck disable=SC2068
-    "${CRAFTER_SCRIPTS_HOME}/${INTERFACE}/${CONTEXT}.sh" ${@:2}
-  else
-    # shellcheck disable=SC2068
-    "${CRAFTER_SCRIPTS_HOME}/common/${CONTEXT}.sh" ${@:2}
-  fi
+  # shellcheck disable=SC2068
+  "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}.sh" ${@:2}
   ;;
 *)
   usage

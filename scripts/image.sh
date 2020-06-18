@@ -5,7 +5,7 @@ usage() {
   echo ""
   echo "Usage: ${CMD_PREFIX:-$(basename "$0")} COMMAND"
   echo ""
-  echo "Manages Crafter ${INTERFACE} images"
+  echo "Manage Crafter ${INTERFACE} images"
   echo ""
   echo "Commands:"
   echo "    build Build a Crafter ${INTERFACE} image"
@@ -22,18 +22,13 @@ if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME"
 fi
 
 COMMAND=$1
-CMD_PREFIX="${CMD_PREFIX:-$(basename "$0")} $COMMAND"
-export CMD_PREFIX
 
 case $COMMAND in
 build)
-  if [ -x "${CRAFTER_SCRIPTS_HOME}/${INTERFACE}/${CONTEXT:-image}/${COMMAND}.sh" ]; then
-    # shellcheck disable=SC2068
-    "${CRAFTER_SCRIPTS_HOME}/${INTERFACE}/${CONTEXT:-image}/${COMMAND}.sh" ${@:2}
-  else
-    # shellcheck disable=SC2068
-    "${CRAFTER_SCRIPTS_HOME}/common/${CONTEXT:-image}/${COMMAND}.sh" ${@:2}
-  fi
+  CMD_PREFIX="${CMD_PREFIX:-$(basename "$0")} $COMMAND"
+  export CMD_PREFIX
+  # shellcheck disable=SC2068
+  "${CRAFTER_SCRIPTS_HOME}/${COMMAND}.sh" ${@:2}
   ;;
 *)
   usage
