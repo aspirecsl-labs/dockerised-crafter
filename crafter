@@ -20,7 +20,7 @@ export CRAFTER_HOME
 export CRAFTER_SCRIPTS_HOME
 
 case $1 in
-authoring | delivery)
+authoring | delivery | volume-manager)
   INTERFACE=$1
   export INTERFACE
   CMD_PREFIX="crafter $1"

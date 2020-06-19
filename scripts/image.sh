@@ -3,14 +3,14 @@ set -e
 
 usage() {
   echo ""
-  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} COMMAND"
+  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} command"
   echo ""
   echo "Manage Crafter ${INTERFACE} images"
   echo ""
   echo "Commands:"
   echo "    build Build a Crafter ${INTERFACE} image"
   echo ""
-  echo "Run '${CMD_PREFIX:-$(basename "$0")} COMMAND --help' for more information about a command."
+  echo "Run '${CMD_PREFIX:-$(basename "$0")} command --help' for more information about a command."
 }
 
 if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME" ]; then
@@ -19,16 +19,22 @@ if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME"
   echo ""
   echo "Use 'crafter authoring image' to manage Crafter authoring images"
   echo "Use 'crafter delivery image' to manage Crafter delivery images"
+  echo "Use 'crafter volume-manager image' to manage Crafter delivery images"
 fi
 
-COMMAND=$1
+command=$1
 
-case $COMMAND in
+case $command in
 build)
-  CMD_PREFIX="${CMD_PREFIX:-$(basename "$0")} $COMMAND"
+  CMD_PREFIX="${CMD_PREFIX:-$(basename "$0")} $command"
   export CMD_PREFIX
-  # shellcheck disable=SC2068
-  "${CRAFTER_SCRIPTS_HOME}/${COMMAND}.sh" ${@:2}
+  if [ -x "${CRAFTER_SCRIPTS_HOME}/${INTERFACE}-${command}.sh" ]; then
+    # shellcheck disable=SC2068
+    "${CRAFTER_SCRIPTS_HOME}/${INTERFACE}-${command}.sh" ${@:2}
+  else
+    # shellcheck disable=SC2068
+    "${CRAFTER_SCRIPTS_HOME}/${command}.sh" ${@:2}
+  fi
   ;;
 *)
   usage

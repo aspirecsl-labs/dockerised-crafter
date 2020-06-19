@@ -8,8 +8,8 @@ COPY site.sh /
 COPY release /
 
 # Create crafter group and user
-RUN addgroup --system --gid 1000 crafter && \
-    adduser --system --uid 1000 --group crafter crafter && \
+RUN addgroup -S -g 1000 crafter && \
+    adduser -S -u 1000 -G crafter crafter && \
     mkdir -p /data && chown crafter:crafter /data && \
     chmod 444 /release && chmod ugo+x /site.sh
 

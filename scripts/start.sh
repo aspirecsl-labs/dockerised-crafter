@@ -40,7 +40,7 @@ else
   fi
 fi
 
-VERSION_FILE="${CRAFTER_HOME}/${INTERFACE}/crafter-release"
+VERSION_FILE="${CRAFTER_HOME}/${INTERFACE}/release"
 
 IMAGE=$(readProperty "${VERSION_FILE}" "IMAGE")
 

@@ -9,7 +9,7 @@ ARG DOWNLOAD_LINK
 ARG SHA512_DOWNLOAD_LINK
 
 COPY sudoers /
-COPY crafter-release /
+COPY release /
 COPY docker-entrypoint.sh /
 COPY docker-healthcheck.sh /
 
@@ -53,9 +53,9 @@ RUN apt-get update && \
         cp /sudoers /etc && \
         chmod 440 /etc/sudoers && \
         chown root:root /etc/sudoers && \
-        cp /crafter-release /etc && \
-        chmod 444 /etc/crafter-release && \
-        chown root:root /etc/crafter-release && \
+        cp /release /etc && \
+        chmod 444 /etc/release && \
+        chown root:root /etc/release && \
         chmod ugo+x /docker-entrypoint.sh \
                     /docker-healthcheck.sh && \
         chown -R crafter:crafter /opt/crafter \

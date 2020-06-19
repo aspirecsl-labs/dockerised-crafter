@@ -96,7 +96,7 @@ elif [ "$1" = 'version' ]; then
   echo -e "\n"
   echo "Crafter Info:"
   echo "-------------"
-  cat /etc/crafter-release
+  cat /etc/release
   echo -e "\n"
   cd "${CRAFTER_BIN_DIR}/apache-tomcat/lib"
   echo "Server Info:"

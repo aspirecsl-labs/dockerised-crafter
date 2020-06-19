@@ -26,15 +26,15 @@ if [ -n "$1" ]; then
 fi
 
 cd "${CRAFTER_HOME}/${INTERFACE}"
-IMAGE=$(readProperty "./crafter-release" "IMAGE")
+IMAGE=$(readProperty "./release" "IMAGE")
 
-VERSION=$(readProperty "./crafter-release" "VERSION")
+VERSION=$(readProperty "./release" "VERSION")
 export VERSION
 
-DOWNLOAD_LINK=$(readProperty "./crafter-release" "BUNDLE_URL")
+DOWNLOAD_LINK=$(readProperty "./release" "BUNDLE_URL")
 export DOWNLOAD_LINK
 
-SHA512_DOWNLOAD_LINK=$(readProperty "./crafter-release" "BUNDLE_SHA512_URL")
+SHA512_DOWNLOAD_LINK=$(readProperty "./release" "BUNDLE_SHA512_URL")
 export SHA512_DOWNLOAD_LINK
 
 docker build \
