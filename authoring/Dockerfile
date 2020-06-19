@@ -22,7 +22,6 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends sudo && \
     apt-get install -y --no-install-recommends rsync && \
     apt-get install -y --no-install-recommends procps && \
-    apt-get install -y --no-install-recommends apache2 && \
     apt-get install -y --no-install-recommends libaio1 && \
     apt-get install -y --no-install-recommends iproute2 && \
     apt-get install -y --no-install-recommends libncurses5 && \
@@ -40,8 +39,11 @@ RUN apt-get update && \
         echo "" && \
         exit 1; \
     else \
-        mkdir -p /opt/crafter/bin \
-                 /opt/crafter/temp/tomcat && \
+        mkdir -p /opt/crafter/backups \
+                 /opt/crafter/temp/tomcat \
+                 /opt/crafter/logs/tomcat \
+                 /opt/crafter/logs/deployer \
+                 /opt/crafter/logs/elasticsearch && \
         # adds crafter user and group to run crafter services
         groupadd -g 1000 -r crafter && \
         useradd -r -u 1000 -g crafter crafter && \
@@ -63,10 +65,6 @@ RUN apt-get update && \
     fi
 
 EXPOSE \
-    # Apache HTTP port
-    80 \
-    # Apache HTTPS port
-    443 \
     # JPDA debug port for Crafter Engine
     8000 \
     # Crafter engine port
@@ -78,6 +76,7 @@ EXPOSE \
 
 
 USER crafter
+WORKDIR /opt/crafter
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["run"]

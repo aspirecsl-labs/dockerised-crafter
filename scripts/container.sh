@@ -15,7 +15,7 @@ usage() {
   echo "    login    Login to the Crafter ${INTERFACE} container"
   echo "    port     Show the port bindings of the Crafter ${INTERFACE} container"
   echo "    restore  Restore the data in the Crafter ${INTERFACE} container"
-  echo "    status   Show all the running Crafter ${INTERFACE} containers"
+  echo "    show     Show all the running Crafter ${INTERFACE} containers"
   echo "    status   Show the status of the Crafter ${INTERFACE} container"
   echo "    version  Show the Crafter ${INTERFACE} version of the container"
   echo "    volume   Show the volume container attached to the Crafter ${INTERFACE} container"

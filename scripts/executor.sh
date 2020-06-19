@@ -55,7 +55,7 @@ source "$CRAFTER_SCRIPTS_HOME"/functions.sh
 
 command=$1
 if [ "$2" = '--overrides' ] || [ "$2" = '-o' ]; then
-  enumerateOptions "$2"
+  enumerateOptions "$3"
 else
   if [ -n "$2" ]; then
     usage
@@ -70,31 +70,38 @@ IMAGE_REFERENCE="${IMAGE}:${VERSION}"
 
 # shellcheck disable=SC2154
 # container may be specified as an option from the command line
-if [ -z "${container}" ] && [ "$(docker container ls --filter="ancestor=${IMAGE_REFERENCE}" | wc -l)" -gt 1 ]; then
+if [ -z "${container}" ] && [ "$(docker container ls --format "{{.ID}}" --filter="ancestor=${IMAGE_REFERENCE}" | wc -l)" -gt 1 ]; then
   echo "Multiple running containers found for image: ${IMAGE_REFERENCE}"
   echo "Try again specifying the container id or name using \"container={id|name}\" override"
   echo "To find all the running containers, run 'crafter authoring container show'"
-  exit 0
+  exit 1
 fi
 
 container=${container:-$(docker container ls --format "{{.ID}}" --filter="ancestor=${IMAGE_REFERENCE}")}
+
+if [ -z "$container" ]; then
+  echo "ERROR: Unable to find a running Crafter ${INTERFACE} container"
+  echo "To start a Crafter ${INTERFACE} container, run 'crafter authoring container start'"
+  exit 1
+fi
+
 case $command in
 login)
   docker exec -it "$container" "/docker-entrypoint.sh" /bin/bash
   ;;
 port)
-  echo -e "\n"
+  echo -e "\nPort bindings:"
   docker port "${container}"
   echo -e "\n"
   ;;
 show)
   echo -e "\n"
-  docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Label \"friendly_name\"}}\t{{.Status}}\t{{.RunningFor}}" --filter="ancestor=${IMAGE_REFERENCE}"
+  docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Label \"ALT_ID\"}}\t{{.Status}}\t{{.RunningFor}}" --filter="ancestor=${IMAGE_REFERENCE}"
   echo -e "\n"
   ;;
 volume)
   echo -e "\n"
-  docker port "${container}"
+  echo "Volume container: $(docker inspect "${container}" --format='{{.HostConfig.VolumesFrom}}')"
   echo -e "\n"
   ;;
 backup | restore | status | version)

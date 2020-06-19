@@ -18,7 +18,7 @@ runOrDebugCrafter() {
   echo "------------------------------------------------------------------------"
   echo "Starting Tomcat"
   echo "------------------------------------------------------------------------"
-  exec "$CRAFTER_BIN_DIR"/apache-tomcat/bin/catalina.sh $catalinaMode | tee "${CRAFTER_LOGS_DIR}/tomcat/catalina.out"
+  exec "$CRAFTER_BIN_DIR"/apache-tomcat/bin/catalina.sh $catalinaMode
 }
 
 status() {
@@ -77,6 +77,10 @@ export CRAFTER_HOME=/opt/crafter
 export CRAFTER_BIN_DIR=$CRAFTER_HOME/bin
 export CRAFTER_BACKUPS_DIR=$CRAFTER_HOME/backups
 
+# reset permissions on volumes originating from the volume container
+sudo chown -R crafter:crafter $CRAFTER_HOME/data
+sudo chown -R crafter:crafter $CRAFTER_HOME/backups
+
 # shellcheck source=/opt/crafter/bin/crafter-setenv.sh
 source "${CRAFTER_BIN_DIR}/crafter-setenv.sh"
 
@@ -85,9 +89,20 @@ if [ "$1" = 'run' ]; then
 elif [ "$1" = 'debug' ]; then
   runOrDebugCrafter "debug"
 elif [ "$1" = 'status' ]; then
+  echo -e "\n"
   status
+  echo -e "\n"
 elif [ "$1" = 'version' ]; then
-  exec cat /etc/crafter-release
+  echo -e "\n"
+  echo "Crafter Info:"
+  echo "-------------"
+  cat /etc/crafter-release
+  echo -e "\n"
+  cd "${CRAFTER_BIN_DIR}/apache-tomcat/lib"
+  echo "Server Info:"
+  echo "------------"
+  exec java -cp catalina.jar org.apache.catalina.util.ServerInfo
+  echo -e "\n"
 elif [ "$1" = 'backup' ]; then
   exec /crafter-entrypoint.sh backup
 elif [ "$1" = 'restore' ]; then

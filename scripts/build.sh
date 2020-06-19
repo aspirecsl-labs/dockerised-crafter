@@ -43,4 +43,4 @@ docker build \
   --build-arg SHA512_DOWNLOAD_LINK \
   --tag "${IMAGE}:${VERSION}" .
 
-exit 0
+exit $?

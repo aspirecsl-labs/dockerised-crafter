@@ -10,6 +10,7 @@ usage() {
   echo "Contexts:"
   echo "    container Manage Crafter ${INTERFACE} containers"
   echo "    image     Manage Crafter ${INTERFACE} images"
+  echo "    volume    Manage Crafter ${INTERFACE} volumes"
   echo ""
   echo "Run '${CMD_PREFIX:-$(basename "$0")} CONTEXT --help' for more information about the commands available to a context."
 }
