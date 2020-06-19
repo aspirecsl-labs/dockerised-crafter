@@ -9,6 +9,7 @@ enumerateOptions() {
 
 readProperty() {
   if [[ $# -ne 2 || ! -r $1 ]]; then
+    echo "Invalid arguments or property file not readable" >&2
     echo "UNDEFINED"
     return 1
   fi
