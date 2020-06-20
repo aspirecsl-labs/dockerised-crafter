@@ -3,9 +3,9 @@ set -e
 
 usage() {
   echo ""
-  echo "Usage: site COMMAND site_name"
+  echo "Usage: $(basename "$0") COMMAND site_name"
   echo ""
-  echo "Transfers site data between a Crafter container and the host system"
+  echo "Transfer site data between a Crafter volume container and the host system"
   echo ""
   echo "Commands:"
   echo "    download  Download the specified site to the present working directory of the host system"
