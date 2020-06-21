@@ -8,7 +8,10 @@ COPY site.sh /bin
 COPY release /etc
 
 # Create crafter group and user
-RUN addgroup -S -g 1000 crafter && \
+RUN apk update && \
+    apk add --no-cache git && \
+    apk add --no-cache curl && \
+    addgroup -S -g 1000 crafter && \
     adduser -S -u 1000 -G crafter crafter && \
     mkdir -p /data && chown crafter:crafter /data && \
     chmod 444 /etc/release && chmod ugo+x /bin/site.sh

@@ -5,13 +5,13 @@ usage() {
   echo ""
   echo "Usage: $(basename "$0") INTERFACE"
   echo ""
-  echo "Manage Crafter images and containers"
+  echo "Manage Crafter containers and sites"
   echo ""
   echo "Interfaces:"
-  echo "    authoring Manage Crafter authoring images and containers"
-  echo "    delivery  Manage Crafter delivery images and containers"
+  echo "    authoring Manage Crafter authoring containers and sites"
+  echo "    delivery  Manage Crafter delivery containers and sites"
   echo ""
-  echo "Run '$(basename "$0") INTERFACE --help' for more information on how to manage an interface."
+  echo "Run '$(basename "$0") INTERFACE --help' for more information on how to manage an INTERFACE."
 }
 
 CRAFTER_HOME=${CRAFTER_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
@@ -20,13 +20,18 @@ export CRAFTER_HOME
 export CRAFTER_SCRIPTS_HOME
 
 case $1 in
-authoring | delivery | volume-manager)
+authoring | delivery)
   INTERFACE=$1
   export INTERFACE
   CMD_PREFIX="crafter $1"
   export CMD_PREFIX
-  # shellcheck disable=SC2068
-  "${CRAFTER_SCRIPTS_HOME}/interface.sh" ${@:2}
+  if [ -x "${CRAFTER_SCRIPTS_HOME}/${INTERFACE}/main.sh" ]; then
+    # shellcheck disable=SC2068
+    "${CRAFTER_SCRIPTS_HOME}/${INTERFACE}/main.sh" ${@:2}
+  else
+    # shellcheck disable=SC2068
+    "${CRAFTER_SCRIPTS_HOME}/interface.sh" ${@:2}
+  fi
   ;;
 *)
   usage
