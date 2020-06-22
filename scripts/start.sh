@@ -3,12 +3,12 @@ set -e
 
 usage() {
   echo ""
-  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} OPTIONS"
+  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} [OVERRIDES]"
   echo ""
-  echo "Starts a Crafter ${INTERFACE} container"
+  echo "Start a Crafter ${INTERFACE} container"
   echo ""
-  echo "Options:"
-  echo "-o|--overrides Allows users to override defaults"
+  echo "Overrides:"
+  echo "Allow users to override the defaults"
   echo "    Overrides are specified as \"name1=value1,name2=value2,...,nameN=valueN\" "
   echo "    Supported overrides are:-"
   echo "        debug_port:     The host machine port to bind the container's Crafter engine port. Example \"debug_port=8000\" "
@@ -30,14 +30,9 @@ fi
 # shellcheck source=<repo_root>/scripts/functions.sh
 source "$CRAFTER_SCRIPTS_HOME"/functions.sh
 
-if [ "$1" = '--overrides' ] || [ "$1" = '-o' ]; then
-  enumerateOptions "$1"
-else
-  if [ -n "$1" ]; then
-    echo "Invalid parameter!"
-    usage
-    exit 1
-  fi
+if ! enumerateKeyValuePairs "$1"; then
+  usage
+  return 1
 fi
 
 VERSION_FILE="${CRAFTER_HOME}/${INTERFACE}/release"
@@ -48,15 +43,15 @@ VERSION=$(readProperty "${VERSION_FILE}" "VERSION")
 
 if [ "${volume:-X}" = 'X' ]; then
   echo ""
-  TS=$(date '+%Y%m%d-%H%M%S')
-  volume="cms_${INTERFACE}-VOL-${TS}"
+  RANDOM=$(date '+%s')
+  volume="cms_${INTERFACE}_vol_${RANDOM}"
   echo "No volume container specified"
   echo "Creating a volume container with name $volume"
   docker create \
     --volume /opt/crafter/data \
     --volume /opt/crafter/backups \
     --name "$volume" tianon/true /bin/true
-    echo ""
+  echo ""
 fi
 echo "Starting container from image: ${IMAGE}:${VERSION}"
 

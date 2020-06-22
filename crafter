@@ -8,8 +8,8 @@ usage() {
   echo "Manage Crafter containers and sites"
   echo ""
   echo "Interfaces:"
-  echo "    authoring Manage Crafter authoring containers and sites"
-  echo "    delivery  Manage Crafter delivery containers and sites"
+  echo "    authoring  Manage Crafter authoring containers and sites"
+  echo "    delivery   Manage Crafter delivery containers and sites"
   echo ""
   echo "Run '$(basename "$0") INTERFACE --help' for more information on how to manage an INTERFACE."
 }

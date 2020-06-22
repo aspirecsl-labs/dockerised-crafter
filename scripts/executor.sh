@@ -29,14 +29,14 @@ usage() {
     ;;
   esac
   echo ""
-  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} OPTIONS"
+  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} [OVERRIDES]"
   echo ""
   echo "$CMD_SUMMARY"
   echo ""
   echo "Container "
   echo ""
-  echo "Options:"
-  echo "-o|--overrides Allows users to override defaults"
+  echo "Overrides:"
+  echo "Allow users to override the defaults"
   echo "    Overrides are specified as \"name1=value1,name2=value2,...,nameN=valueN\" "
   echo "    Supported overrides are:-"
   echo "        container:  The id or name of the container to manage. Example \"container=869efc01315c\" or \"container=awesome_alice\""
@@ -46,21 +46,17 @@ if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME"
   echo "Failed to setup the execution context!"
   echo "Are you running this script directly?"
   echo ""
-  echo "Use 'crafter authoring image build' to build a Crafter authoring image"
-  echo "Use 'crafter delivery image build' to build a Crafter delivery image"
+  echo "Use 'crafter authoring container command' to run a command on the Crafter authoring container"
+  echo "Use 'crafter delivery container command' to run a command on the Crafter delivery container"
 fi
 
 # shellcheck source=<repo_root>/scripts/functions.sh
 source "$CRAFTER_SCRIPTS_HOME"/functions.sh
 
 command=$1
-if [ "$2" = '--overrides' ] || [ "$2" = '-o' ]; then
-  enumerateOptions "$3"
-else
-  if [ -n "$2" ]; then
-    usage
-    exit 1
-  fi
+if ! enumerateKeyValuePairs "$2"; then
+  usage
+  return 1
 fi
 
 VERSION_FILE="${CRAFTER_HOME}/${INTERFACE}/release"
@@ -105,6 +101,12 @@ volume)
   echo -e "\n"
   ;;
 backup | restore | status | version)
+  if [ "$command" = 'status' ]; then
+    echo -e "\n------------------------------------------------------------------------"
+    echo "Crafter ${INTERFACE} container status"
+    echo "------------------------------------------------------------------------"
+    docker stats --no-stream --format "table {{.CPUPerc}}\t{{.MemPerc}}\t{{.MemUsage}}" "$container"
+  fi
   docker exec -it "$container" "/docker-entrypoint.sh" "$command"
   ;;
 *)
