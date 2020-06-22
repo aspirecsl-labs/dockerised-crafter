@@ -3,7 +3,7 @@ set -e
 
 usage() {
   echo ""
-  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} context"
+  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} CONTEXT"
   echo ""
   echo "Manage Crafter ${INTERFACE} images and containers"
   echo ""
@@ -11,7 +11,7 @@ usage() {
   echo "    container Manage Crafter ${INTERFACE} containers"
   echo "    site      Manage Crafter ${INTERFACE} sites"
   echo ""
-  echo "Run '${CMD_PREFIX:-$(basename "$0")} context --help' for more information about the commands available to a context."
+  echo "Run '${CMD_PREFIX:-$(basename "$0")} CONTEXT --help' for more information about the commands available to a context."
 }
 
 if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME" ]; then

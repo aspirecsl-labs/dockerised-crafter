@@ -3,7 +3,7 @@ set -e
 
 usage() {
   echo ""
-  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} command"
+  echo "Usage: ${CMD_PREFIX:-$(basename "$0")} COMMAND"
   echo ""
   echo "Manage Crafter ${INTERFACE} containers"
   echo ""
@@ -20,7 +20,7 @@ usage() {
   echo "    version  Show the Crafter ${INTERFACE} version of the container"
   echo "    volume   Show the volume container attached to the Crafter ${INTERFACE} container"
   echo ""
-  echo "Run '${CMD_PREFIX:-$(basename "$0")} command --help' for more information about a command."
+  echo "Run '${CMD_PREFIX:-$(basename "$0")} COMMAND --help' for more information about a command."
 }
 
 if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME" ]; then

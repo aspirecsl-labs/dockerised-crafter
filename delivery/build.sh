@@ -10,7 +10,7 @@ usage() {
 }
 
 WORKING_DIR=${CRAFTER_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
-CRAFTER_SCRIPTS_HOME=${WORKING_DIR}../scripts
+CRAFTER_SCRIPTS_HOME=${WORKING_DIR}/../scripts
 
 # shellcheck source=<repo_root>/scripts/functions.sh
 source "${CRAFTER_SCRIPTS_HOME}"/functions.sh
