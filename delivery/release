@@ -2,5 +2,3 @@ NAME=Crafter CMS
 SUBSYSTEM=Delivery
 VERSION=3.1.5
 IMAGE=aspirecsl/pocket-crafter-cms-delivery
-BUNDLE_URL=https://downloads.craftercms.org/3.1.5/crafter-cms-delivery-3.1.5.tar.gz
-BUNDLE_SHA512_URL=https://downloads.craftercms.org/3.1.5/crafter-cms-delivery-3.1.5.tar.gz.sha512

@@ -37,9 +37,10 @@ usage() {
   echo ""
   echo "Overrides:"
   echo "Allow users to override the defaults"
-  echo "    Overrides are specified as \"name1=value1,name2=value2,...,nameN=valueN\" "
-  echo "    Supported overrides are:-"
-  echo "        container:  The id or name of the container to manage. Example \"container=869efc01315c\" or \"container=awesome_alice\""
+  echo "  Overrides are specified as \"name1=value1,name2=value2,...,nameN=valueN\""
+  echo "  Supported overrides are:-"
+  echo "    container:  The id or name of the container to manage. Example \"container=869efc01315c\" or \"container=awesome_alice\""
+  echo "    version:    The Crafter version to use instead of default. Example \"version=3.1.7\" "
 }
 
 if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME" ]; then
@@ -48,10 +49,11 @@ if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME"
   echo ""
   echo "Use 'crafter authoring container command' to run a command on the Crafter authoring container"
   echo "Use 'crafter delivery container command' to run a command on the Crafter delivery container"
+  exit 9
 fi
 
-# shellcheck source=<repo_root>/scripts/functions.sh
-source "$CRAFTER_SCRIPTS_HOME"/functions.sh
+# shellcheck source=<repo_root>/scripts/lib.sh
+source "$CRAFTER_SCRIPTS_HOME"/lib.sh
 
 command=$1
 if ! enumerateKeyValuePairs "$2"; then
@@ -61,23 +63,17 @@ fi
 
 VERSION_FILE="${CRAFTER_HOME}/${INTERFACE}/release"
 IMAGE=$(readProperty "${VERSION_FILE}" "IMAGE")
-VERSION=$(readProperty "${VERSION_FILE}" "VERSION")
+VERSION=${version:-$(readProperty "${VERSION_FILE}" "VERSION")}
 IMAGE_REFERENCE="${IMAGE}:${VERSION}"
 
-# shellcheck disable=SC2154
-# container may be specified as an option from the command line
-if [ -z "${container}" ] && [ "$(docker container ls --format "{{.ID}}" --filter="ancestor=${IMAGE_REFERENCE}" | wc -l)" -gt 1 ]; then
-  echo "Multiple running containers found for image: ${IMAGE_REFERENCE}"
-  echo "Try again specifying the container id or name using \"container={id|name}\" override"
-  echo "To find all the running containers, run 'crafter authoring container show'"
-  exit 1
+if [ "$command" = 'show' ]; then
+  echo ""
+  docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Label \"ALT_ID\"}}\t{{.Status}}\t{{.RunningFor}}" --filter="ancestor=${IMAGE_REFERENCE}"
+  echo ""
+  exit 0
 fi
 
-container=${container:-$(docker container ls --format "{{.ID}}" --filter="ancestor=${IMAGE_REFERENCE}")}
-
-if [ -z "$container" ]; then
-  echo "ERROR: Unable to find a running Crafter ${INTERFACE} container"
-  echo "To start a Crafter ${INTERFACE} container, run 'crafter authoring container start'"
+if ! container=$(getUniqueRunningContainer); then
   exit 1
 fi
 
@@ -88,17 +84,12 @@ login)
 port)
   echo -e "\nPort bindings:"
   docker port "${container}"
-  echo -e "\n"
-  ;;
-show)
-  echo -e "\n"
-  docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Label \"ALT_ID\"}}\t{{.Status}}\t{{.RunningFor}}" --filter="ancestor=${IMAGE_REFERENCE}"
-  echo -e "\n"
+  echo ""
   ;;
 volume)
-  echo -e "\n"
+  echo ""
   echo "Volume container: $(docker inspect "${container}" --format='{{.HostConfig.VolumesFrom}}')"
-  echo -e "\n"
+  echo ""
   ;;
 backup | restore | status | version)
   if [ "$command" = 'status' ]; then

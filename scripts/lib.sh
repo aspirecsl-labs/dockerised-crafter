@@ -1,5 +1,5 @@
 enumerateKeyValuePairs() {
-  overrides_regex='^([-_a-zA-Z0-9]+=[-_a-zA-Z0-9]+,)*[-_a-zA-Z0-9]+=[-_a-zA-Z0-9]+$'
+  overrides_regex='^([.-_a-zA-Z0-9]+=[.-_a-zA-Z0-9]+,)*[.-_a-zA-Z0-9]+=[.-_a-zA-Z0-9]+$'
   if [[ $1 =~ $overrides_regex ]]; then
     IFS="," read -r -a options <<<"$1"
     for option in "${options[@]}"; do
@@ -115,5 +115,29 @@ validatableInput() {
     done
   fi
   echo "$response"
+  return 0
+}
+
+getUniqueRunningContainer() {
+  # shellcheck disable=SC2154
+  # container may be specified as an option from the command line
+  if [ -z "${container}" ] && [ "$(docker container ls --format "{{.ID}}" --filter="ancestor=${IMAGE_REFERENCE}" | wc -l)" -gt 1 ]; then
+    echo "Multiple running containers found for image: ${IMAGE_REFERENCE}" >&2
+    echo "Try again specifying the container id or name using \"container={id|name}\" override" >&2
+    echo "To find all the running containers, run 'crafter ${INTERFACE} container show'" >&2
+    return 1
+  fi
+
+  container=${container:-$(docker container ls --format "{{.ID}}" --filter="ancestor=${IMAGE_REFERENCE}")}
+
+  if [ -z "$container" ]; then
+    echo "ERROR: Unable to find a running Crafter ${INTERFACE} container" >&2
+    echo "" >&2
+    echo "To start a Crafter ${INTERFACE} container, run 'crafter authoring container start'" >&2
+    echo "For Crafter version != ${VERSION}, try again with 'version=x.y.z' override where 'x.y.z' is the required version" >&2
+    return 1
+  fi
+
+  echo "$container"
   return 0
 }

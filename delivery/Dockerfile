@@ -5,8 +5,6 @@ LABEL maintainer="labs@aspirecsl.com"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG VERSION
-ARG DOWNLOAD_LINK
-ARG SHA512_DOWNLOAD_LINK
 
 COPY sudoers /
 COPY release /
@@ -26,6 +24,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends iproute2 && \
     apt-get install -y --no-install-recommends libncurses5 && \
     apt-get install -y --no-install-recommends openssh-client && \
+    DOWNLOAD_LINK="https://downloads.craftercms.org/${VERSION}/crafter-cms-delivery-${VERSION}.tar.gz" && \
+    SHA512_DOWNLOAD_LINK="https://downloads.craftercms.org/${VERSION}/crafter-cms-delivery-${VERSION}.tar.gz.sha512" && \
     DOWNLOAD_TO="/tmp/crafter.tar.gz" && \
     SHA512_DOWNLOAD_TO="/tmp/crafter.tar.gz.sha512" && \
     echo "Downloading Crafter Delivery $VERSION" && \

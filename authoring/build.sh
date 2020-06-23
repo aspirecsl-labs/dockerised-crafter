@@ -12,18 +12,23 @@ usage() {
 WORKING_DIR=${CRAFTER_HOME:=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
 CRAFTER_SCRIPTS_HOME=${WORKING_DIR}/../scripts
 
-# shellcheck source=<repo_root>/scripts/functions.sh
-source "${CRAFTER_SCRIPTS_HOME}"/functions.sh
+# shellcheck source=<repo_root>/scripts/lib.sh
+source "${CRAFTER_SCRIPTS_HOME}"/lib.sh
 
-if [ -n "$1" ]; then
-  usage
-  exit 1
+crafter_version_regex='^[0-9]+.[0-9]+.[0-9]+$'
+if [[ "$1" =~ $crafter_version_regex ]]; then
+  VERSION="$1"
+else
+  if [ -n "$1" ]; then
+    usage
+    exit 0
+  fi
 fi
 
 cd "${CRAFTER_HOME}/${INTERFACE}"
 IMAGE=$(readProperty "./release" "IMAGE")
 
-VERSION=$(readProperty "./release" "VERSION")
+VERSION=${VERSION:-$(readProperty "./release" "VERSION")}
 export VERSION
 
 DOWNLOAD_LINK=$(readProperty "./release" "BUNDLE_URL")

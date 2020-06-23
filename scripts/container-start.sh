@@ -9,14 +9,14 @@ usage() {
   echo ""
   echo "Overrides:"
   echo "Allow users to override the defaults"
-  echo "    Overrides are specified as \"name1=value1,name2=value2,...,nameN=valueN\" "
-  echo "    Supported overrides are:-"
-  echo "        debug_port:     The host machine port to bind the container's Crafter engine port. Example \"debug_port=8000\" "
-  echo "        deployer_port:  The host machine port to bind the container's Crafter deployer port. Example \"deployer_port=9191\" "
-  echo "        es_port:        The host machine port to bind the container's Elasticsearch port. Example \"es_port=9201\" "
-  echo "        alt_id:         A programmer friendly alternate id value to set in the metadata of the container. Example \"alt_id=my.unique.container\" "
-  echo "        port:           The host machine port to bind the container's Crafter engine port. Example \"port=8080\" "
-  echo "        volume:         The container (name) from which Crafter container obtains its user data volumes. Example \"volume=crafter-auth-3.1.5-volume\" "
+  echo "  Overrides are specified as \"name1=value1,name2=value2,...,nameN=valueN\""
+  echo "  Supported overrides are:-"
+  echo "    debug_port:     The host machine port to bind the container's Crafter engine port. Example \"debug_port=8000\""
+  echo "    deployer_port:  The host machine port to bind the container's Crafter deployer port. Example \"deployer_port=9191\""
+  echo "    es_port:        The host machine port to bind the container's Elasticsearch port. Example \"es_port=9201\""
+  echo "    alt_id:         A programmer friendly alternate id value to set in the metadata of the container. Example \"alt_id=my.unique.container\""
+  echo "    port:           The host machine port to bind the container's Crafter engine port. Example \"port=8080\""
+  echo "    volume:         The container (name) from which Crafter container obtains its user data volumes. Example \"volume=crafter-auth-3.1.5-volume\""
 }
 
 if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME" ]; then
@@ -25,10 +25,11 @@ if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME"
   echo ""
   echo "Use 'crafter authoring container start' to start a Crafter authoring container"
   echo "Use 'crafter delivery container start' to start a Crafter delivery container"
+  exit 9
 fi
 
-# shellcheck source=<repo_root>/scripts/functions.sh
-source "$CRAFTER_SCRIPTS_HOME"/functions.sh
+# shellcheck source=<repo_root>/scripts/lib.sh
+source "$CRAFTER_SCRIPTS_HOME"/lib.sh
 
 if ! enumerateKeyValuePairs "$1"; then
   usage
@@ -36,10 +37,9 @@ if ! enumerateKeyValuePairs "$1"; then
 fi
 
 VERSION_FILE="${CRAFTER_HOME}/${INTERFACE}/release"
-
 IMAGE=$(readProperty "${VERSION_FILE}" "IMAGE")
-
-VERSION=$(readProperty "${VERSION_FILE}" "VERSION")
+VERSION=${version:-$(readProperty "${VERSION_FILE}" "VERSION")}
+IMAGE_REFERENCE="${IMAGE}:${VERSION}"
 
 if [ "${volume:-X}" = 'X' ]; then
   echo ""
@@ -95,7 +95,7 @@ if [ "${debug_port:-X}" != 'X' ]; then
   DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p ${debug_port}:8000"
 fi
 
-DOCKER_RUN_CMD="${DOCKER_RUN_CMD} --volumes-from ${volume} ${IMAGE}:${VERSION}"
+DOCKER_RUN_CMD="${DOCKER_RUN_CMD} --volumes-from ${volume} ${IMAGE_REFERENCE}"
 
 if [ "${debug:-no}" = 'yes' ]; then
   DOCKER_RUN_CMD="${DOCKER_RUN_CMD} debug"
