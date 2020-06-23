@@ -36,10 +36,7 @@ if ! enumerateKeyValuePairs "$1"; then
   return 1
 fi
 
-VERSION_FILE="${CRAFTER_HOME}/${INTERFACE}/release"
-IMAGE=$(readProperty "${VERSION_FILE}" "IMAGE")
-VERSION=${version:-$(readProperty "${VERSION_FILE}" "VERSION")}
-IMAGE_REFERENCE="${IMAGE}:${VERSION}"
+IMAGE_REFERENCE=$(getImageRef)
 
 if [ "${volume:-X}" = 'X' ]; then
   echo ""
@@ -53,7 +50,7 @@ if [ "${volume:-X}" = 'X' ]; then
     --name "$volume" tianon/true /bin/true
   echo ""
 fi
-echo "Starting container from image: ${IMAGE}:${VERSION}"
+echo "Starting container from image: ${IMAGE_REFERENCE}"
 
 DOCKER_RUN_CMD="docker run --rm "
 

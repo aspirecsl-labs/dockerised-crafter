@@ -32,7 +32,7 @@ container)
   # shellcheck disable=SC2068
   "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}.sh" ${@:2}
   ;;
-site-[_-0-9a-zA-Z]+)
+site-[_-0-9a-zA-Z]*)
   CONTEXT=site
   export CONTEXT
   SITE=${1:5}

@@ -61,10 +61,7 @@ if ! enumerateKeyValuePairs "$2"; then
   return 1
 fi
 
-VERSION_FILE="${CRAFTER_HOME}/${INTERFACE}/release"
-IMAGE=$(readProperty "${VERSION_FILE}" "IMAGE")
-VERSION=${version:-$(readProperty "${VERSION_FILE}" "VERSION")}
-IMAGE_REFERENCE="${IMAGE}:${VERSION}"
+IMAGE_REFERENCE=$(getImageRef)
 
 if [ "$command" = 'show' ]; then
   echo ""

@@ -118,7 +118,17 @@ validatableInput() {
   return 0
 }
 
+getImageRef() {
+  VERSION_FILE="${CRAFTER_HOME}/${INTERFACE}/release"
+  IMAGE=$(readProperty "${VERSION_FILE}" "IMAGE")
+  VERSION=${version:-$(readProperty "${VERSION_FILE}" "VERSION")}
+  export VERSION
+  echo "${IMAGE}:${VERSION}"
+}
+
 getUniqueRunningContainer() {
+  local IMAGE_REFERENCE
+  IMAGE_REFERENCE=$(getImageRef)
   # shellcheck disable=SC2154
   # container may be specified as an option from the command line
   if [ -z "${container}" ] && [ "$(docker container ls --format "{{.ID}}" --filter="ancestor=${IMAGE_REFERENCE}" | wc -l)" -gt 1 ]; then
