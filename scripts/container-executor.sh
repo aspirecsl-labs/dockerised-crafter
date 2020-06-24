@@ -33,8 +33,6 @@ usage() {
   echo ""
   echo "$CMD_SUMMARY"
   echo ""
-  echo "Container "
-  echo ""
   echo "Overrides:"
   echo "Allow users to override the defaults"
   echo "  Overrides are specified as \"name1=value1,name2=value2,...,nameN=valueN\""
@@ -61,7 +59,14 @@ if ! enumerateKeyValuePairs "$2"; then
   return 1
 fi
 
-enumerateImageDetails
+IMAGE=aspirecsl/crafter-cms-${INTERFACE}
+# shellcheck disable=SC2154
+# version may be specified as an option from the command line
+if [ -n "$version" ]; then
+  eval IMAGE_REFERENCE="${IMAGE}:${version}"
+else
+  eval IMAGE_REFERENCE="${IMAGE}"
+fi
 
 if [ "$command" = 'show' ]; then
   echo ""
@@ -70,7 +75,7 @@ if [ "$command" = 'show' ]; then
   exit 0
 fi
 
-if ! container=$(getUniqueRunningContainer); then
+if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}"); then
   exit 1
 fi
 

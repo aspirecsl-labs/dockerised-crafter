@@ -36,7 +36,14 @@ if ! enumerateKeyValuePairs "$1"; then
   return 1
 fi
 
-enumerateImageDetails
+IMAGE=aspirecsl/crafter-cms-${INTERFACE}
+# shellcheck disable=SC2154
+# version may be specified as an option from the command line
+if [ -n "$version" ]; then
+  eval IMAGE_REFERENCE="${IMAGE}:${version}"
+else
+  eval IMAGE_REFERENCE="${IMAGE}"
+fi
 
 if [ "${volume:-X}" = 'X' ]; then
   echo ""
@@ -44,15 +51,17 @@ if [ "${volume:-X}" = 'X' ]; then
   volume="cms_${INTERFACE}_vol_${RANDOM}"
   echo "No volume container specified"
   echo "Creating a volume container with name $volume"
+  mkdir -p "${CRAFTER_HOME}/workspace/${volume}_data" "${CRAFTER_HOME}/workspace/${volume}_backups"
   docker create \
-    --volume /opt/crafter/data \
-    --volume /opt/crafter/backups \
+    --env TZ=Europe/London \
+    --volume "${CRAFTER_HOME}/workspace/${volume}_data":/opt/crafter/data \
+    --volume "${CRAFTER_HOME}/workspace/${volume}_backups":/opt/crafter/backups \
     --name "$volume" tianon/true /bin/true
   echo ""
 fi
 echo "Starting container from image: ${IMAGE_REFERENCE}"
 
-DOCKER_RUN_CMD="docker run --rm "
+DOCKER_RUN_CMD="docker run --rm --env TZ=Europe/London "
 
 if [ "${alt_id:-X}" != 'X' ]; then
   DOCKER_RUN_CMD="${DOCKER_RUN_CMD} --alt_id ALT_ID=${alt_id}"

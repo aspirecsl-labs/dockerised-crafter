@@ -1,4 +1,4 @@
 NAME=Crafter CMS
 SUBSYSTEM=Authoring
 VERSION=3.1.5
-IMAGE=aspirecsl/pocket-crafter-cms-authoring
+IMAGE=aspirecsl/crafter-cms-authoring

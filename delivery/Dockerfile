@@ -39,7 +39,8 @@ RUN apt-get update && \
         echo "" && \
         exit 1; \
     else \
-        mkdir -p /opt/crafter/backups \
+        mkdir -p /opt/crafter/data \
+                 /opt/crafter/backups \
                  /opt/crafter/temp/tomcat \
                  /opt/crafter/logs/tomcat \
                  /opt/crafter/logs/deployer \

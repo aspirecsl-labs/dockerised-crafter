@@ -3,40 +3,32 @@ set -e
 
 usage() {
   echo ""
-  echo "Usage: $(basename "$0") COMMAND site_name"
+  echo "Usage: $(basename "$0") name COMMAND"
   echo ""
   echo "Transfer site data between a Crafter volume container and the host system"
   echo ""
+  echo "name: The site name"
+  echo ""
   echo "Commands:"
-  echo "    download  Download the specified site to the present working directory of the host system"
-  echo "    upload    Upload the files in the present working directory of the host system to the specified site"
+  echo "  context-status   Show the status of the specified site's context"
+  echo "  create           Create a site on the container"
+  echo "  context-destroy  Destroy the specified site's context"
+  echo "  context-rebuild  Rebuild the specified site's context"
   echo ""
   exit 1
 }
 
-bad_site() {
-  echo ""
-  echo "Unable to perform the requested operation."
-  echo ""
-  echo "Does the site exist on Crafter?"
-  echo ""
-  echo "This operation is only supported on Crafter authoring volumes"
-  echo "Are you running this on a Crafter delivery volume?"
-  exit 2
-}
+SITE=$1
+export SITE
 
-case $1 in
-download)
-  if [ ! -r "/opt/crafter/data/repos/sites/$2/sandbox" ]; then
-    bad_site
-  fi
-  cp -fr /opt/crafter/data/repos/sites/"$2"/sandbox /data
+command=$2
+
+case $command in
+context-[_-0-9a-zA-Z]*)
+  "/engine/site-${command}.sh"
   ;;
-upload)
-  if [ ! -w "/opt/crafter/data/repos/sites/$2/sandbox" ]; then
-    bad_site
-  fi
-  cp -fr /data /opt/crafter/data/repos/sites/"$2"/sandbox
+create)
+  "/studio/site-create.sh"
   ;;
 *)
   usage

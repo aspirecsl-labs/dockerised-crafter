@@ -43,4 +43,6 @@ docker build \
   --build-arg SHA512_DOWNLOAD_LINK \
   --tag "${IMAGE}:${VERSION}" .
 
+docker tag "${IMAGE}:${VERSION}" "${IMAGE}:latest"
+
 exit $?

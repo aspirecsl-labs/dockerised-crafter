@@ -7,34 +7,21 @@ usage() {
   echo ""
   echo "Manage the specified site on the Crafter authoring instance"
   echo ""
-  echo "Commands:"
-  echo "    context-status   Show the status of the specified site's context"
-  echo "    create           Create a site on the container"
-  echo "    destroy-context  Destroy the specified site's context"
-  echo "    download         Download a site from the container to the host machine"
-  echo "    rebuild-context  Rebuild the specified site's context"
-  echo "    upload           Upload a site from the host machine to the container"
-  echo ""
   echo "name  The name of the site to manage"
+  echo ""
+  echo "Commands:"
+  echo "  context-status   Show the status of the specified site's context"
+  echo "  create           Create a site on the container"
+  echo "  context-destroy  Destroy the specified site's context"
+  echo "  context-rebuild  Rebuild the specified site's context"
   echo ""
   echo "Overrides:"
   echo "Allow users to supply overrides for commands"
   echo "  Overrides are specified as \"name1=value1,name2=value2,...,nameN=valueN\""
-  echo "  Common Overrides are:-"
-  echo "    container:      The id or name of the container to manage. Example \"container=869efc01315c\" or \"container=awesome_alice\""
-  echo "    version:        The Crafter version to use instead of default. Example \"version=3.1.7\" "
-  echo "  Overrides for 'create' command are:-"
-  echo "    password        The git password for the site repo. Example \"password=crafter\""
-  echo "    url             The git URL for the site repo. Example \"url=https://my-git-server.com/site-repo\""
-  echo "    user            The git user for the site repo. Example \"user=crafter\""
-  echo "    sandbox_branch  The sandbox branch to use. Example \"sandbox_branch=master\""
-  echo "    site_desc       The description for the site. Example \"site_desc=my awesome site\""
-  echo "  Overrides for 'upload' command are:-"
-  echo "    host_dir        The directory in the host machine from which the site is uploaded to the container. Example \"host_dir=/home/crafter/site\""
-  echo "    prompt          Prompt the user before overwriting a file. Valid values are 'yes|no'. Example \"prompt=yes\""
-  echo "  Overrides for 'download' command are:-"
-  echo "    host_dir        The directory in the host machine to which the site is downloaded from the container. Example \"host_dir=/home/crafter/site\""
-  echo "    prompt          Prompt the user before overwriting a file. Valid values are 'yes|no'. Example \"prompt=yes\""
+  echo "  Supported overrides are:-"
+  echo "    container:       The id or name of the container to manage. Example \"container=869efc01315c\" or \"container=awesome_alice\""
+  echo "    driver_version:  The Crafter CMS driver version to use instead of the default. Example \"driver_version=20.6.1\" "
+  echo "    version:         The Crafter version to use instead of default. Example \"version=3.1.7\" "
 }
 
 if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME" ]; then
@@ -59,12 +46,46 @@ if ! enumerateKeyValuePairs "$2"; then
   return 1
 fi
 
-if ! container=$(getUniqueRunningContainer); then
+IMAGE=aspirecsl/crafter-cms-${INTERFACE}
+# shellcheck disable=SC2154
+# version may be specified as an option from the command line
+if [ -n "$version" ]; then
+  eval IMAGE_REFERENCE="${IMAGE}:${version}"
+else
+  eval IMAGE_REFERENCE="${IMAGE}"
+fi
+
+DRIVER_IMAGE=aspirecsl/crafter-cms-driver
+# shellcheck disable=SC2154
+# driver_version may be specified as an option from the command line
+if [ -n "$driver_version" ]; then
+  eval DRIVER_IMAGE_REFERENCE="${DRIVER_IMAGE}:${driver_version}"
+else
+  eval DRIVER_IMAGE_REFERENCE="${DRIVER_IMAGE}"
+fi
+
+if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}"); then
   exit 1
 fi
 
-command=$1
-volume_container=$(docker inspect "${container}" --format='{{.HostConfig.VolumesFrom}}')
+RANDOM=$(date '+%s')
+NETWORK="cms_${INTERFACE}_nw_${RANDOM}"
+docker network create "${NETWORK}"
+docker network connect --alias crafter "${NETWORK}" "${container}"
 
-echo "$command"
-echo "$volume_container"
+GIT_URL=$(readProperty "${CRAFTER_HOME}/.repoproperties" "${SITE}_repo")
+export GIT_URL
+
+docker run \
+  --rm \
+  --env GIT_URL \
+  --env GIT_USER \
+  --env GIT_BRANCH \
+  --env GIT_PASSWORD \
+  --network "${NETWORK}" \
+  "${DRIVER_IMAGE_REFERENCE}" site.sh "${SITE}" "${command}"
+
+docker network disconnect "${NETWORK}" "${container}"
+docker network prune
+
+exit 0

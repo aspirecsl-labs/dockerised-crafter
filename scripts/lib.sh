@@ -21,7 +21,6 @@ enumerateKeyValuePairs() {
 readProperty() {
   if [[ $# -ne 2 || ! -r $1 ]]; then
     echo "Invalid arguments or property file not readable" >&2
-    echo "UNDEFINED"
     return 1
   fi
   PROP_VAL=$(awk -F "=" \
@@ -33,7 +32,7 @@ readProperty() {
                      exit;
                    }
                 }' "$1")
-  echo "${PROP_VAL:-UNDEFINED}"
+  echo "${PROP_VAL}"
   return 0
 }
 
@@ -118,30 +117,25 @@ validatableInput() {
   return 0
 }
 
-enumerateImageDetails() {
-  eval VERSION_FILE="${CRAFTER_HOME}/${INTERFACE}/release"
-  eval IMAGE=$(readProperty "${VERSION_FILE}" "IMAGE")
-  eval VERSION=${version:-$(readProperty "${VERSION_FILE}" "VERSION")}
-  eval IMAGE_REFERENCE="${IMAGE}:${VERSION}"
-}
-
 getUniqueRunningContainer() {
+  local interface="$1"
+  local image_reference="$2"
   # shellcheck disable=SC2154
   # container may be specified as an option from the command line
-  if [ -z "${container}" ] && [ "$(docker container ls --format "{{.ID}}" --filter="ancestor=${IMAGE_REFERENCE}" | wc -l)" -gt 1 ]; then
-    echo "Multiple running containers found for image: ${IMAGE_REFERENCE}" >&2
+  if [ -z "${container}" ] && [ "$(docker container ls --format "{{.ID}}" --filter="ancestor=${image_reference}" | wc -l)" -gt 1 ]; then
+    echo "Multiple running containers found for image: ${image_reference}" >&2
     echo "Try again specifying the container id or name using \"container={id|name}\" override" >&2
-    echo "To find all the running containers, run 'crafter ${INTERFACE} container show'" >&2
+    echo "To find all the running containers, run 'crafter ${interface} container show'" >&2
     return 1
   fi
 
-  container=${container:-$(docker container ls --format "{{.ID}}" --filter="ancestor=${IMAGE_REFERENCE}")}
+  container=${container:-$(docker container ls --format "{{.ID}}" --filter="ancestor=${image_reference}")}
 
   if [ -z "$container" ]; then
-    echo "ERROR: Unable to find a running Crafter ${INTERFACE} container" >&2
+    echo "ERROR: Unable to find a running Crafter ${interface} container" >&2
     echo "" >&2
-    echo "To start a Crafter ${INTERFACE} container, run 'crafter authoring container start'" >&2
-    echo "For Crafter version != ${VERSION}, try again with 'version=x.y.z' override where 'x.y.z' is the required version" >&2
+    echo "To start a Crafter ${interface} container, run 'crafter authoring container start'" >&2
+    echo "For a specific Crafter version, try again with 'version=x.y.z' override where 'x.y.z' is the required version" >&2
     return 1
   fi
 

@@ -24,3 +24,5 @@ IMAGE=$(readProperty "./release" "IMAGE")
 VERSION=$(readProperty "./release" "VERSION")
 
 docker build --tag "${IMAGE}:${VERSION}" .
+
+docker tag "${IMAGE}:${VERSION}" "${IMAGE}:latest"
