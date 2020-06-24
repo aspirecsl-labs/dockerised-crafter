@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 usage() {
   case $command in
@@ -61,7 +62,7 @@ if ! enumerateKeyValuePairs "$2"; then
   return 1
 fi
 
-IMAGE_REFERENCE=$(getImageRef)
+enumerateImageDetails
 
 if [ "$command" = 'show' ]; then
   echo ""

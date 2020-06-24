@@ -36,7 +36,7 @@ if ! enumerateKeyValuePairs "$1"; then
   return 1
 fi
 
-IMAGE_REFERENCE=$(getImageRef)
+enumerateImageDetails
 
 if [ "${volume:-X}" = 'X' ]; then
   echo ""
