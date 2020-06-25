@@ -10,7 +10,6 @@ if /studio/login.sh; then
     --request POST \
     --cookie-jar "${COOKIE_JAR}" \
     --cookie "${COOKIE_JAR}" \
-    --junk-session-cookies \
     --header 'X-XSRF-TOKEN: s3cr3tv4lu3' \
     --header 'Cookie: XSRF-TOKEN=s3cr3tv4lu3;' \
     --header 'Content-Type: application/json' \
