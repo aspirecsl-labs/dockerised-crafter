@@ -12,7 +12,6 @@ if /studio/login.sh; then
     \"site_id\": \"${SITE}\",
     \"single_branch\": false,
     \"sandbox_branch\": \"${REPO_BRANCH}\",
-    \"create_as_orphan\": false,
     \"use_remote\": true,
     \"description\": \"${SITE} Magazine\",
     \"authentication_type\": \"basic\",
@@ -30,15 +29,14 @@ if /studio/login.sh; then
     CURL_CMD="curl --silent --show-error --output /dev/null --write-out %{http_code}"
   fi
 
+  JSESSIONID=$(grep <"${COOKIE_JAR}" JSESSIONID | awk '{print $7}')
   if result=$($CURL_CMD \
     --location \
-    --cookie-jar "${COOKIE_JAR}" \
-    --cookie "${COOKIE_JAR}" \
     --header 'X-XSRF-TOKEN: s3cr3tv4lu3' \
-    --header 'Cookie: XSRF-TOKEN=s3cr3tv4lu3;' \
+    --header "Cookie: XSRF-TOKEN=s3cr3tv4lu3;JSESSIONID=${JSESSIONID};" \
     --header 'Content-Type: application/json' \
     --data-raw "$payload" \
-    "http://crafter:${PORT}/studio/api/1/services/api/1/site/create.json"); then
+    "http://crafter/studio/api/1/services/api/1/site/create.json"); then
     if [ "$result" -gt 399 ]; then
       echo ""
       echo "${SITE} site creation failed with http status $result."

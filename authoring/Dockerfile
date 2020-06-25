@@ -8,8 +8,12 @@ ARG VERSION
 
 COPY sudoers /
 COPY release /
+COPY crafter-http.conf /
+COPY crafter-https.conf /
 COPY docker-entrypoint.sh /
 COPY docker-healthcheck.sh /
+COPY crafter-self-signed.crt /
+COPY crafter-self-signed.key /
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git && \
@@ -21,9 +25,10 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends rsync && \
     apt-get install -y --no-install-recommends procps && \
     apt-get install -y --no-install-recommends libaio1 && \
+    apt-get install -y --no-install-recommends apache2 && \
     apt-get install -y --no-install-recommends iproute2 && \
     apt-get install -y --no-install-recommends libncurses5 && \
-    apt-get install -y --no-install-recommends openssh-client && \
+    apt-get install -y --no-install-recommends openssh-server && \
     DOWNLOAD_LINK="https://downloads.craftercms.org/${VERSION}/crafter-cms-authoring-${VERSION}.tar.gz" && \
     SHA512_DOWNLOAD_LINK="https://downloads.craftercms.org/${VERSION}/crafter-cms-authoring-${VERSION}.tar.gz.sha512" && \
     DOWNLOAD_TO="/tmp/crafter.tar.gz" && \
@@ -62,10 +67,23 @@ RUN apt-get update && \
         chown -R crafter:crafter /opt/crafter \
                                  /docker-entrypoint.sh \
                                  /docker-healthcheck.sh && \
+        service apache2 stop && \
+        rm -f /etc/apache2/sites-enabled/* /etc/apache2/sites-available/* && \
+        cp /crafter-http.conf /etc/apache2/sites-available && \
+        ln -sf /etc/apache2/sites-available/crafter-http.conf /etc/apache2/sites-enabled/crafter-http.conf && \
+        cp /crafter-https.conf /etc/apache2/sites-available && \
+        ln -sf /etc/apache2/sites-available/crafter-https.conf /etc/apache2/sites-enabled/crafter-https.conf && \
+        cp /crafter-self-signed.crt /etc/ssl/certs && chmod 644 /etc/ssl/certs/crafter-self-signed.crt && \
+        cp /crafter-self-signed.key /etc/ssl/certs && chmod 600 /etc/ssl/certs/crafter-self-signed.key && \
+        a2enmod ssl headers proxy_http && \
         rm -fr /var/lib/apt/lists/* $DOWNLOAD_TO ${SHA512_DOWNLOAD_TO}; \
     fi
 
 EXPOSE \
+    # http port
+    80 \
+    # https port
+    443 \
     # JPDA debug port for Crafter Engine
     8000 \
     # Crafter engine port

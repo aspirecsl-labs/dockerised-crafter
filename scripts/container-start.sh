@@ -15,6 +15,8 @@ usage() {
   echo "    debug_port:     The host machine port to bind the container's Crafter engine port. Example \"debug_port=8000\""
   echo "    deployer_port:  The host machine port to bind the container's Crafter deployer port. Example \"deployer_port=9191\""
   echo "    es_port:        The host machine port to bind the container's Elasticsearch port. Example \"es_port=9201\""
+  echo "    http_port:      The host machine port to bind the container's HTTP (80) port. Example \"http_port=1080\""
+  echo "    https_port:     The host machine port to bind the container's HTTPS (443) port. Example \"https_port=10443\""
   echo "    mode:           The container start mode. Allowed values are 'demo' (default) and 'dev'. Example \"mode=dev\""
   echo "                    In 'demo' mode local volumes are not mounted and changes made to sites will be lost on container termination."
   echo "                    In 'dev' mode local volumes are mounted as '/opt/crafter/data' and '/opt/crafter/backups'. Changes made to sites persist even after container termination."
@@ -82,6 +84,19 @@ fi
 if [ "${alt_id:-X}" != 'X' ]; then
   DOCKER_RUN_CMD="${DOCKER_RUN_CMD} --alt_id ALT_ID=${alt_id}"
 fi
+
+if [ "${http_port:-X}" = 'X' ]; then
+    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 80:80"
+else
+    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p ${http_port}:80"
+fi
+
+if [ "${https_port:-X}" = 'X' ]; then
+    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 443:443"
+else
+    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p ${https_port}:443"
+fi
+
 if [ "${port:-X}" = 'X' ]; then
   if [ "${INTERFACE}" = 'authoring' ]; then
     DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 8080:8080"

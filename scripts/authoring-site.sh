@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 usage() {
   echo ""
@@ -35,10 +36,15 @@ createNetworkAndAttachCrafterContainer() {
 }
 
 detachCrafterContainerAndDeleteNetwork() {
-  sleep 1s
-  docker network disconnect --force "${NETWORK}" "${container}" >/dev/null
-  sleep 1s
-  docker network rm "${NETWORK}" >/dev/null
+  if [ -n "$NETWORK" ]; then
+    nw_id=$(docker network ls --filter name="$NETWORK" --format '{{.ID}}')
+    if [ -n "$nw_id" ]; then
+      sleep 1s
+      docker network disconnect --force "${nw_id}" "${container}" >/dev/null
+      sleep 1s
+      docker network rm "${nw_id}" >/dev/null
+    fi
+  fi
 }
 
 runSiteCreateCommand() {
@@ -70,7 +76,6 @@ runSiteCreateCommand() {
 
   docker run \
     --rm \
-    --env PORT \
     --env VERBOSE \
     --env REPO_URL \
     --env REPO_USER \
@@ -90,13 +95,14 @@ runSiteContextCommand() {
 
   docker run \
     --rm \
-    --env PORT \
     --env VERBOSE \
     --network "${NETWORK}" \
     "${DRIVER_IMAGE_REFERENCE}" "/site.sh" "${SITE}" "${command}"
 
   detachCrafterContainerAndDeleteNetwork
 }
+
+trap detachCrafterContainerAndDeleteNetwork EXIT
 
 if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME" ]; then
   echo "Failed to setup the execution context!"
@@ -131,9 +137,6 @@ if [ -n "$verbose" ]; then
   VERBOSE=$verbose
   export VERBOSE
 fi
-
-PORT=8080
-export PORT
 
 IMAGE=aspirecsl/crafter-cms-${INTERFACE}
 # shellcheck disable=SC2154

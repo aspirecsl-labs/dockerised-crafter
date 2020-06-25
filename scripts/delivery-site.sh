@@ -86,9 +86,6 @@ if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}");
   exit 1
 fi
 
-PORT=9080
-export PORT
-
 RANDOM=$(date '+%s')
 NETWORK="cms_${INTERFACE}_nw_${RANDOM}"
 docker network create "${NETWORK}" >/dev/null
@@ -96,7 +93,6 @@ docker network connect --alias crafter "${NETWORK}" "${container}"
 
 docker run \
   --rm \
-  --env PORT \
   --env VERBOSE \
   --network "${NETWORK}" \
   "${DRIVER_IMAGE_REFERENCE}" "/site.sh" "${SITE}" "${command}"

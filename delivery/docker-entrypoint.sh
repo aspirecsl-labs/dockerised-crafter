@@ -8,6 +8,10 @@ runOrDebugCrafter() {
     catalinaMode="run"
   fi
   echo "------------------------------------------------------------------------"
+  echo "Starting Apache"
+  echo "------------------------------------------------------------------------"
+  sudo service apache2 start
+  echo "------------------------------------------------------------------------"
   echo "Starting Deployer"
   echo "------------------------------------------------------------------------"
   "$DEPLOYER_HOME"/deployer.sh start
@@ -88,6 +92,17 @@ if [ "$1" = 'run' ]; then
   runOrDebugCrafter "run"
 elif [ "$1" = 'debug' ]; then
   runOrDebugCrafter "debug"
+elif [ "$1" = 'recovery' ]; then
+  echo ""
+  echo "------------------------------------------------------------------"
+  echo "If restoring from a backup:-"
+  echo "  Run the following command to start crafter services"
+  echo "  after the instance is successfully restored:"
+  echo ""
+  echo "    /docker-entrypoint.sh run"
+  echo "------------------------------------------------------------------"
+  echo ""
+  exec /bin/bash
 elif [ "$1" = 'mode' ]; then
   echo ""
   echo "Container mode: ${CONTAINER_MODE}"
@@ -108,17 +123,7 @@ elif [ "$1" = 'version' ]; then
   exec java -cp catalina.jar org.apache.catalina.util.ServerInfo
   echo ""
 elif [ "$1" = 'backup' ]; then
-  exec /crafter-entrypoint.sh backup
-elif [ "$1" = 'restore' ]; then
-  if [ -z "$2" ]; then
-    echo -e "\nThe backup file path was not specified"
-    echo -e "Try again by specifying a backup file path from the following list:-\n"
-    cd "$CRAFTER_BACKUPS_DIR"
-    ls -ltr crafter-authoring-backup*
-    echo ""
-    exit 1
-  fi
-  exec /crafter-entrypoint.sh restore "$2"
+  exec ${CRAFTER_BIN_DIR}/crafter.sh backup
 else
   exec "$@"
 fi

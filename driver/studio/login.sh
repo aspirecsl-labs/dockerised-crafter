@@ -25,13 +25,11 @@ fi
 if result=$($CURL_CMD \
   --location \
   --cookie-jar "${COOKIE_JAR}" \
-  --cookie "${COOKIE_JAR}" \
-  --junk-session-cookies \
   --header 'X-XSRF-TOKEN: s3cr3tv4lu3' \
   --header 'Cookie: XSRF-TOKEN=s3cr3tv4lu3;' \
   --header 'Content-Type: application/json' \
   --data-raw "$payload" \
-  "http://crafter:${PORT}/studio/api/1/services/api/1/security/login.json"); then
+  "http://crafter/studio/api/1/services/api/1/security/login.json"); then
   if [ "$result" -gt 399 ]; then
     echo ""
     echo "Studio login failed with http status $result."

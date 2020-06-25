@@ -15,7 +15,6 @@ usage() {
   echo "  context-destroy  Destroy the specified site's context"
   echo "  context-rebuild  Rebuild the specified site's context"
   echo ""
-  exit 1
 }
 
 SITE=$1
@@ -26,11 +25,16 @@ command=$2
 case $command in
 context-[_-0-9a-zA-Z]*)
   "/engine/site-${command}.sh"
+  RTNCD=$?
   ;;
 create)
   "/studio/site-create.sh"
+  RTNCD=$?
   ;;
 *)
   usage
+  RTNCD=1
   ;;
 esac
+
+exit $RTNCD

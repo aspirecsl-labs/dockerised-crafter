@@ -15,8 +15,8 @@ usage() {
   port)
     CMD_SUMMARY="Show the port bindings of the Crafter ${INTERFACE} container"
     ;;
-  restore)
-    CMD_SUMMARY="Restore the data in the Crafter ${INTERFACE} container"
+  recovery)
+    CMD_SUMMARY="Start the Crafter ${INTERFACE} container in recovery mode (CLI access)."
     ;;
   show)
     CMD_SUMMARY="Show all the running Crafter ${INTERFACE} containers"
@@ -96,7 +96,7 @@ volume)
   echo "Volume container: $(docker inspect "${container}" --format='{{.HostConfig.VolumesFrom}}')"
   echo ""
   ;;
-backup | mode | restore | status | version)
+backup | mode | recovery | status | version)
   if [ "$command" = 'status' ]; then
     echo -e "\n------------------------------------------------------------------------"
     echo "Crafter ${INTERFACE} container status"

@@ -14,7 +14,7 @@ echo -e "----------------------------\n"
 ${CURL_CMD} \
   --location \
   --request GET \
-  "http://crafter:${PORT}/api/1/site/context/status?crafterSite=${SITE}&token=defaultManagementToken"
+  "http://crafter/api/1/site/context/status?crafterSite=${SITE}&token=defaultManagementToken"
 RTNCD=$?
 
 echo -e "\n------------------------------------------------------------------------\n"
