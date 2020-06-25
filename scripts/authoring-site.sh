@@ -143,7 +143,9 @@ docker run \
   --network "${NETWORK}" \
   "${DRIVER_IMAGE_REFERENCE}" "/site.sh" "${SITE}" "${command}"
 
-docker network disconnect "${NETWORK}" "${container}"
+sleep 3s
+
+docker network disconnect --force "${NETWORK}" "${container}"
 docker network rm "${NETWORK}"
 
 exit 0
