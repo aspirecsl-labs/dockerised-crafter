@@ -111,7 +111,7 @@ export CRAFTER_PASSWORD
 RANDOM=$(date '+%s')
 NETWORK="cms_${INTERFACE}_nw_${RANDOM}"
 docker network create "${NETWORK}" >/dev/null
-docker network connect --alias crafter --alias "${container}" "${NETWORK}" "${container}"
+docker network connect --alias crafter --alias "${container}" "${NETWORK}" "${container}" >/dev/null
 
 docker run \
   --rm \

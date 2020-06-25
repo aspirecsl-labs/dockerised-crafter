@@ -7,9 +7,15 @@ else
   CURL_CMD="curl --silent --show-error"
 fi
 
+echo -e "\n------------------------------------------------------------------------"
+echo "Crafter Site Context Rebuild"
+echo -e "----------------------------\n"
+
 ${CURL_CMD} \
   --location \
   --request GET \
   "http://crafter:${PORT}/api/1/site/context/rebuild?crafterSite=${SITE}&token=defaultManagementToken"
+RTNCD=$?
 
-exit $?
+echo -e "\n------------------------------------------------------------------------\n"
+exit $RTNCD
