@@ -1,14 +1,21 @@
 #!/bin/ash
 set -e
 
+echo -e "\n------------------------------------------------------------------------"
+echo "Crafter Studio Login"
+echo "--------------------"
+
 COOKIE_JAR=${COOKIE_JAR:-/tmp/cookies_$$.txt}
 
 payload="{
-  \"username\": \"admin\",
-  \"password\": \"admin\"
+  \"username\": \"${CRAFTER_USER}\",
+  \"password\": \"${CRAFTER_PASSWORD}\"
 }"
+str_to_replace="\"password\": \"${CRAFTER_PASSWORD}\""
+replacement_str="\"password\": \"***\""
+
 if [ "$VERBOSE" = 'yes' ]; then
-  echo -e "Payload:\n$payload"
+  echo -e "\nStudio login payload:\n${payload/$str_to_replace/$replacement_str}"
   echo ""
   echo "Cookie Jar: ${COOKIE_JAR}"
   echo -e "\n"
@@ -30,14 +37,17 @@ if result=$($CURL_CMD \
   if [ "$result" -gt 399 ]; then
     echo ""
     echo "Studio login failed with http status $result."
-    exit 1
+    RTNCD=1
   else
     echo ""
     echo "Studio login successful."
-    exit 0
+    RTNCD=0
   fi
 else
   echo ""
   echo "Studio login failed."
-  exit 9
+  RTNCD=9
 fi
+
+echo -e "\n------------------------------------------------------------------------\n"
+exit $RTNCD

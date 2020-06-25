@@ -80,6 +80,12 @@ if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}");
   exit 1
 fi
 
+echo ""
+# input "label" "nullable" "sensitive"
+CRAFTER_USER=$(input "Crafter username?" "n" "n")
+CRAFTER_PASSWORD=$(input "Crafter password?" "n" "y")
+echo ""
+
 if [ "$(docker exec "${container}" echo "${CONTAINER_MODE}")" = 'dev' ]; then
   DETACH_REPO=false
   # input "label" "nullable" "sensitive"
@@ -115,7 +121,9 @@ export REPO_URL
 export REPO_USER
 export REPO_BRANCH
 export DETACH_REPO
+export CRAFTER_USER
 export REPO_PASSWORD
+export CRAFTER_PASSWORD
 
 docker run \
   --rm \
@@ -124,7 +132,9 @@ docker run \
   --env REPO_USER \
   --env REPO_BRANCH \
   --env DETACH_REPO \
+  --env CRAFTER_USER \
   --env REPO_PASSWORD \
+  --env CRAFTER_PASSWORD \
   --network "${NETWORK}" \
   "${DRIVER_IMAGE_REFERENCE}" "/site.sh" "${SITE}" "${command}"
 

@@ -1,6 +1,10 @@
 #!/bin/ash
 set -e
 
+echo -e "\n------------------------------------------------------------------------"
+echo "Crafter Site Creation"
+echo "---------------------"
+
 COOKIE_JAR=${COOKIE_JAR:-/tmp/cookies_$$.txt}
 export COOKIE_JAR
 
@@ -20,7 +24,7 @@ if /studio/login.sh; then
     \"create_option\": \"clone\"
   }"
   if [ "$VERBOSE" = 'yes' ]; then
-    echo -e "Payload:\n${payload/${REPO_PASSWORD}/***}"
+    echo -e "\nSite creation payload:\n${payload/${REPO_PASSWORD}/***}"
     echo ""
     echo "Cookie Jar: ${COOKIE_JAR}"
     echo -e "\n"
@@ -41,19 +45,22 @@ if /studio/login.sh; then
     if [ "$result" -gt 399 ]; then
       echo ""
       echo "${SITE} site creation failed with http status $result."
-      exit 1
+      RTNCD=1
     else
       echo ""
       echo "${SITE} site created successfully."
-      exit 0
+      RTNCD=0
     fi
   else
     echo ""
     echo "${SITE} site creation failed."
-    exit 9
+    RTNCD=9
   fi
 else
   echo ""
   echo "studio login failed!!!"
-  exit 1
+  RTNCD=1
 fi
+
+echo -e "\n------------------------------------------------------------------------\n"
+exit $RTNCD
