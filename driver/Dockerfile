@@ -8,6 +8,7 @@ COPY site.sh /
 COPY release /etc
 COPY engine /engine
 COPY studio /studio
+COPY docker-entrypoint.sh /
 
 # Create crafter group and user
 RUN apk update && \
@@ -18,8 +19,10 @@ RUN apk update && \
     chmod 444 /etc/release && \
     chmod -R ugo+x /engine \
                    /studio \
-                   /site.sh
+                   /site.sh \
+                   /docker-entrypoint.sh
 
 USER crafter
 
-CMD ["ash"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["version"]
