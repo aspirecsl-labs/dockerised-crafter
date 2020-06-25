@@ -38,7 +38,7 @@ if /studio/login.sh; then
     --header 'Cookie: XSRF-TOKEN=s3cr3tv4lu3;' \
     --header 'Content-Type: application/json' \
     --data-raw "$payload" \
-    "http://crafter:8080/studio/api/1/services/api/1/site/create.json"); then
+    "http://crafter:${PORT}/studio/api/1/services/api/1/site/create.json"); then
     if [ "$result" -gt 399 ]; then
       echo ""
       echo "${SITE} site creation failed with http status $result."

@@ -5,13 +5,12 @@ usage() {
   echo ""
   echo "Usage: ${CMD_PREFIX:-$(basename "$0")} COMMAND [OVERRIDES]"
   echo ""
-  echo "Manage the specified site on the Crafter authoring instance"
+  echo "Manage the specified site on the Crafter delivery instance"
   echo ""
   echo "name  The name of the site to manage"
   echo ""
   echo "Commands:"
   echo "  context-status   Show the status of the specified site's context"
-  echo "  create           Create a site on the container"
   echo "  context-destroy  Destroy the specified site's context"
   echo "  context-rebuild  Rebuild the specified site's context"
   echo ""
@@ -29,7 +28,7 @@ if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME"
   echo "Failed to setup the execution context!"
   echo "Are you running this script directly?"
   echo ""
-  echo "Use 'crafter authoring site-{name} COMMAND' to manage the named site on the Crafter authoring container"
+  echo "Use 'crafter delivery site-{name} COMMAND' to manage the named site on the Crafter delivery container"
   exit 9
 fi
 
@@ -42,6 +41,12 @@ fi
 source "${CRAFTER_SCRIPTS_HOME}/lib.sh"
 
 command=$1
+if [ "$command" = 'create' ]; then
+  echo "ERROR: Unsupported operation" >&2
+  echo "Sites cannot be created directly on Crafter Delivery instances" >&2
+  exit 1
+fi
+
 if ! enumerateKeyValuePairs "$2"; then
   usage
   exit 1
@@ -81,47 +86,8 @@ if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}");
   exit 1
 fi
 
-echo ""
-# input "label" "nullable" "sensitive"
-CRAFTER_USER=$(input "Crafter username?" "n" "n")
-CRAFTER_PASSWORD=$(input "Crafter password?" "n" "y")
-echo ""
-
-if [ "$(docker exec "${container}" echo "${CONTAINER_MODE}")" = 'dev' ]; then
-  DETACH_REPO=false
-  # input "label" "nullable" "sensitive"
-  REPO_BRANCH=$(input "${SITE} repo branch? " "n" "n")
-  if ! [[ ${REPO_BRANCH} =~ ^feature|bugfix|hotfix/[-_a-zA-Z0-9]+$ ]]; then
-    echo "" >&2
-    echo "Repo branches intended for development should start with 'bugfix', 'feature' or 'hotfix'" >&2
-    echo "" >&2
-    exit 1
-  fi
-else
-  DETACH_REPO=true
-  REPO_USER=$(readProperty "${CRAFTER_HOME}/repo.properties" "repo_user")
-  REPO_URL=$(readProperty "${CRAFTER_HOME}/repo.properties" "${SITE}_repo")
-  REPO_PASSWORD=$(readProperty "${CRAFTER_HOME}/repo.properties" "repo_password")
-  # input "label" "nullable" "sensitive"
-  REPO_BRANCH=$(input "${SITE} repo branch (default: master)? " "y" "n")
-  REPO_BRANCH=${REPO_BRANCH:-master}
-fi
-
-# input "label" "nullable" "sensitive"
-REPO_URL=${REPO_URL:-$(input "${SITE} repo url? " "n" "n")}
-REPO_USER=${REPO_USER:-$(input "${SITE} repo user? " "n" "n")}
-REPO_PASSWORD=${REPO_PASSWORD:-$(input "${SITE} repo password? " "n" "y")}
-
-PORT=8080
-
+PORT=9080
 export PORT
-export REPO_URL
-export REPO_USER
-export REPO_BRANCH
-export DETACH_REPO
-export CRAFTER_USER
-export REPO_PASSWORD
-export CRAFTER_PASSWORD
 
 RANDOM=$(date '+%s')
 NETWORK="cms_${INTERFACE}_nw_${RANDOM}"
@@ -132,13 +98,6 @@ docker run \
   --rm \
   --env PORT \
   --env VERBOSE \
-  --env REPO_URL \
-  --env REPO_USER \
-  --env REPO_BRANCH \
-  --env DETACH_REPO \
-  --env CRAFTER_USER \
-  --env REPO_PASSWORD \
-  --env CRAFTER_PASSWORD \
   --network "${NETWORK}" \
   "${DRIVER_IMAGE_REFERENCE}" "/site.sh" "${SITE}" "${command}"
 

@@ -1,8 +1,15 @@
 #!/bin/ash
 set -e
 
-curl --silent \
-  --show-error \
+if [ "$VERBOSE" = 'yes' ]; then
+  CURL_CMD="curl --verbose"
+else
+  CURL_CMD="curl --silent --show-error"
+fi
+
+${CURL_CMD} \
   --location \
   --request GET \
-  "http://crafter:8080/api/1/site/context/status?crafterSite=${SITE}&token=defaultManagementToken"
+  "http://crafter:${PORT}/api/1/site/context/status?crafterSite=${SITE}&token=defaultManagementToken"
+
+exit $?

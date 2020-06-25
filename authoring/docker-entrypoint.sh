@@ -100,7 +100,7 @@ elif [ "$1" = 'version' ]; then
   echo ""
   echo "Crafter Info:"
   echo "-------------"
-  cat /etc/release
+  curl --silent --show-error http://localhost:8080/studio/api/2/monitoring/version?token=defaultManagementToken
   echo ""
   cd "${CRAFTER_BIN_DIR}/apache-tomcat/lib"
   echo "Server Info:"
