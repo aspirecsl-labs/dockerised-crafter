@@ -25,8 +25,6 @@ if /studio/login.sh; then
   if [ "$VERBOSE" = 'yes' ]; then
     echo -e "\nPayload:\n${payload/${REPO_PASSWORD}/***}"
     echo ""
-    echo "Cookie Jar: ${COOKIE_JAR}"
-    echo -e "\n"
     CURL_CMD="curl --verbose --output /dev/null --write-out %{http_code}"
   else
     CURL_CMD="curl --silent --show-error --output /dev/null --write-out %{http_code}"
