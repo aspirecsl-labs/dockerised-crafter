@@ -7,10 +7,13 @@ usage() {
     CMD_SUMMARY="Backup the data in the Crafter ${INTERFACE} container"
     ;;
   login)
-    CMD_SUMMARY="Login to the specified crafter container"
+    CMD_SUMMARY="Login to the Crafter ${INTERFACE} container"
+    ;;
+  mode)
+    CMD_SUMMARY="Show the operational mode of the Crafter ${INTERFACE} container"
     ;;
   port)
-    CMD_SUMMARY="Show the port bindings of the specified crafter container"
+    CMD_SUMMARY="Show the port bindings of the Crafter ${INTERFACE} container"
     ;;
   restore)
     CMD_SUMMARY="Restore the data in the Crafter ${INTERFACE} container"

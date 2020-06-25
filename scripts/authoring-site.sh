@@ -68,9 +68,6 @@ if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}");
   exit 1
 fi
 
-# always prompt for sandbox branch
-REPO_BRANCH=$(input "${SITE} Repo Branch (default: master)" "y" "n")
-
 if [ "$(docker exec "${container}" echo "${CONTAINER_MODE}")" = 'dev' ]; then
   DETACH_REPO=false
   # input "label" "nullable" "sensitive"
@@ -115,7 +112,7 @@ docker run \
   --env DETACH_REPO \
   --env REPO_PASSWORD \
   --network "${NETWORK}" \
-  "${DRIVER_IMAGE_REFERENCE}" site.sh "${SITE}" "${command}"
+  "${DRIVER_IMAGE_REFERENCE}" "/site.sh" "${SITE}" "${command}"
 
 docker network disconnect "${NETWORK}" "${container}"
 docker network prune

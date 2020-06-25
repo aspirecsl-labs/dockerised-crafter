@@ -3,9 +3,7 @@ set -e
 
 COOKIE_JAR=${COOKIE_JAR:-/tmp/cookies_$$.txt}
 
-if curl --silent \
-  --show-error \
-  --location \
+if curl --location \
   --request POST \
   --cookie-jar "${COOKIE_JAR}" \
   --cookie "${COOKIE_JAR}" \

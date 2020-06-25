@@ -1,15 +1,11 @@
 #!/bin/ash
 set -e
 
-WORKING_DIR=${WORKING_DIR:=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}
-
 COOKIE_JAR=${COOKIE_JAR:-/tmp/cookies_$$.txt}
 export COOKIE_JAR
 
-if "$WORKING_DIR"/login.sh; then
-  if curl --silent \
-    --show-error \
-    --location \
+if /studio/login.sh; then
+  if curl --location \
     --request POST \
     --cookie-jar "${COOKIE_JAR}" \
     --cookie "${COOKIE_JAR}" \

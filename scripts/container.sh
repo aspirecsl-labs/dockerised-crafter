@@ -14,6 +14,7 @@ usage() {
   echo "(when a Crafter ${INTERFACE} container is running)"
   echo "  backup     Backup the data in the Crafter ${INTERFACE} container"
   echo "  login      Login to the Crafter ${INTERFACE} container"
+  echo "  mode       Show the operational mode of the Crafter ${INTERFACE} container"
   echo "  port       Show the port bindings of the Crafter ${INTERFACE} container"
   echo "  restore    Restore the data in the Crafter ${INTERFACE} container"
   echo "  show       Show all the running Crafter ${INTERFACE} containers"
@@ -36,7 +37,7 @@ fi
 command=$1
 
 case $command in
-backup | login | port | restore | show | start | start-dev | status | version | volume)
+backup | login | mode | port | restore | show | start | start-dev | status | version | volume)
   CMD_PREFIX="${CMD_PREFIX:-$(basename "$0")} $command"
   export CMD_PREFIX
   if [ "${command}" = 'start' ]; then
