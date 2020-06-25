@@ -1,14 +1,13 @@
 #!/bin/ash
 set -e
 
-echo -e "\n------------------------------------------------------------------------"
-echo "Crafter Site Creation"
-echo "---------------------"
-
 COOKIE_JAR=${COOKIE_JAR:-/tmp/cookies_$$.txt}
 export COOKIE_JAR
 
 if /studio/login.sh; then
+  echo -e "\n------------------------------------------------------------------------"
+  echo "Crafter Site Creation"
+  echo "---------------------"
   payload="{
     \"site_id\": \"${SITE}\",
     \"single_branch\": false,
