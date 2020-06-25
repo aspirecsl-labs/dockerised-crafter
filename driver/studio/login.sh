@@ -15,7 +15,7 @@ str_to_replace="\"password\": \"${CRAFTER_PASSWORD}\""
 replacement_str="\"password\": \"***\""
 
 if [ "$VERBOSE" = 'yes' ]; then
-  echo -e "\nStudio login payload:\n${payload/$str_to_replace/$replacement_str}"
+  echo -e "\nPayload:\n${payload/$str_to_replace/$replacement_str}"
   echo ""
   echo "Cookie Jar: ${COOKIE_JAR}"
   echo -e "\n"

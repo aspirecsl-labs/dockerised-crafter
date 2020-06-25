@@ -23,7 +23,7 @@ if /studio/login.sh; then
     \"create_option\": \"clone\"
   }"
   if [ "$VERBOSE" = 'yes' ]; then
-    echo -e "\nSite creation payload:\n${payload/${REPO_PASSWORD}/***}"
+    echo -e "\nPayload:\n${payload/${REPO_PASSWORD}/***}"
     echo ""
     echo "Cookie Jar: ${COOKIE_JAR}"
     echo -e "\n"
