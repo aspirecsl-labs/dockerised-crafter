@@ -1,5 +1,5 @@
 *.bak
 .idea
 *.log*
-.default_repo_properties
+repo.properties
 /workspace/*

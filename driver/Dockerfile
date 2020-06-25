@@ -12,7 +12,6 @@ COPY docker-entrypoint.sh /
 
 # Create crafter group and user
 RUN apk update && \
-    apk add --no-cache git && \
     apk add --no-cache curl && \
     addgroup -S -g 1000 crafter && \
     adduser -S -u 1000 -G crafter crafter && \

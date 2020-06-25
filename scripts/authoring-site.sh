@@ -20,8 +20,9 @@ usage() {
   echo "  Overrides are specified as \"name1=value1,name2=value2,...,nameN=valueN\""
   echo "  Supported overrides are:-"
   echo "    container:       The id or name of the container to manage. Example \"container=869efc01315c\" or \"container=awesome_alice\""
-  echo "    driver_version:  The Crafter CMS driver version to use instead of the default. Example \"driver_version=20.6.1\" "
-  echo "    version:         The Crafter version to use instead of default. Example \"version=3.1.7\" "
+  echo "    driver_version:  The Crafter CMS driver version to use instead of the default. Example \"driver_version=20.6.1\""
+  echo "    verbose:         Turn on the verbose logging of the site operations. Allowed values are 'yes' and 'no' (default). Example \"verbose=yes\""
+  echo "    version:         The Crafter version to use instead of default. Example \"version=3.1.7\""
 }
 
 if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME" ]; then
@@ -44,6 +45,17 @@ command=$1
 if ! enumerateKeyValuePairs "$2"; then
   usage
   exit 1
+fi
+
+# shellcheck disable=SC2154
+# verbose may be specified as an option from the command line
+if [ -n "$verbose" ]; then
+  allowed_verbose_modes=(no yes)
+  if ! arrayContainsElement "${verbose}" "${allowed_verbose_modes[@]}"; then
+    usage
+    exit 1
+  fi
+  VERBOSE=$verbose
 fi
 
 IMAGE=aspirecsl/crafter-cms-${INTERFACE}
@@ -71,33 +83,34 @@ fi
 if [ "$(docker exec "${container}" echo "${CONTAINER_MODE}")" = 'dev' ]; then
   DETACH_REPO=false
   # input "label" "nullable" "sensitive"
-  REPO_BRANCH=$(input "${SITE} Repo Branch " "n" "n")
+  REPO_BRANCH=$(input "${SITE} repo branch? " "n" "n")
   if ! [[ ${REPO_BRANCH} =~ ^feature|bugfix|hotfix/[-_a-zA-Z0-9]+$ ]]; then
     echo "" >&2
-    echo "Site branches intended for development should start with 'bugfix', 'feature' or 'hotfix'" >&2
+    echo "Repo branches intended for development should start with 'bugfix', 'feature' or 'hotfix'" >&2
     echo "" >&2
     exit 1
   fi
 else
   DETACH_REPO=true
-  REPO_USER=$(readProperty "${CRAFTER_HOME}/.default_repo_properties" "repo_user")
-  REPO_URL=$(readProperty "${CRAFTER_HOME}/.default_repo_properties" "${SITE}_repo")
-  REPO_PASSWORD=$(readProperty "${CRAFTER_HOME}/.default_repo_properties" "repo_password")
+  REPO_USER=$(readProperty "${CRAFTER_HOME}/repo.properties" "repo_user")
+  REPO_URL=$(readProperty "${CRAFTER_HOME}/repo.properties" "${SITE}_repo")
+  REPO_PASSWORD=$(readProperty "${CRAFTER_HOME}/repo.properties" "repo_password")
   # input "label" "nullable" "sensitive"
-  REPO_BRANCH=$(input "${SITE} Repo Branch (default: master)" "y" "n")
+  REPO_BRANCH=$(input "${SITE} repo branch (default: master)? " "y" "n")
   REPO_BRANCH=${REPO_BRANCH:-master}
 fi
 
 RANDOM=$(date '+%s')
 NETWORK="cms_${INTERFACE}_nw_${RANDOM}"
-docker network create "${NETWORK}"
+docker network create "${NETWORK}" >/dev/null
 docker network connect --alias crafter "${NETWORK}" "${container}"
 
 # input "label" "nullable" "sensitive"
-REPO_URL=${REPO_URL:-$(input "${SITE} Repo URL" "n" "n")}
-REPO_USER=${REPO_USER:-$(input "${SITE} Repo user" "n" "n")}
-REPO_PASSWORD=${REPO_PASSWORD:-$(input "${SITE} Repo password" "n" "y")}
+REPO_URL=${REPO_URL:-$(input "${SITE} repo url? " "n" "n")}
+REPO_USER=${REPO_USER:-$(input "${SITE} repo user? " "n" "n")}
+REPO_PASSWORD=${REPO_PASSWORD:-$(input "${SITE} repo password? " "n" "y")}
 
+export VERBOSE
 export REPO_URL
 export REPO_USER
 export REPO_BRANCH
@@ -106,6 +119,7 @@ export REPO_PASSWORD
 
 docker run \
   --rm \
+  --env VERBOSE \
   --env REPO_URL \
   --env REPO_USER \
   --env REPO_BRANCH \
@@ -115,6 +129,6 @@ docker run \
   "${DRIVER_IMAGE_REFERENCE}" "/site.sh" "${SITE}" "${command}"
 
 docker network disconnect "${NETWORK}" "${container}"
-docker network prune
+docker network rm "${NETWORK}"
 
 exit 0
