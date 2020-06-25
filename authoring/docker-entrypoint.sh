@@ -88,21 +88,25 @@ if [ "$1" = 'run' ]; then
   runOrDebugCrafter "run"
 elif [ "$1" = 'debug' ]; then
   runOrDebugCrafter "debug"
+elif [ "$1" = 'mode' ]; then
+  echo ""
+  echo "Container mode: ${CONTAINER_MODE}"
+  echo ""
 elif [ "$1" = 'status' ]; then
-  echo -e "\n"
+  echo ""
   status
-  echo -e "\n"
+  echo ""
 elif [ "$1" = 'version' ]; then
-  echo -e "\n"
+  echo ""
   echo "Crafter Info:"
   echo "-------------"
   cat /etc/release
-  echo -e "\n"
+  echo ""
   cd "${CRAFTER_BIN_DIR}/apache-tomcat/lib"
   echo "Server Info:"
   echo "------------"
   exec java -cp catalina.jar org.apache.catalina.util.ServerInfo
-  echo -e "\n"
+  echo ""
 elif [ "$1" = 'backup' ]; then
   exec /crafter-entrypoint.sh backup
 elif [ "$1" = 'restore' ]; then
@@ -111,7 +115,7 @@ elif [ "$1" = 'restore' ]; then
     echo -e "Try again by specifying a backup file name from the following list:-\n"
     cd "$CRAFTER_BACKUPS_DIR"
     ls -ltr crafter-authoring-backup*
-    echo -e "\n"
+    echo ""
     exit 1
   fi
   exec /crafter-entrypoint.sh restore "$2"

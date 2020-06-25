@@ -3,9 +3,11 @@ enumerateKeyValuePairs() {
   if [[ $1 =~ $overrides_regex ]]; then
     IFS="," read -r -a options <<<"$1"
     for option in "${options[@]}"; do
-      k=$(echo "$option" | cut -d"=" -f1 | tr '[:upper:]' '[:lower:]')
-      v=$(echo "$option" | cut -d"=" -f2)
-      eval "$k"="$v"
+      if [ -n "$option" ]; then
+        k=$(echo "$option" | cut -d"=" -f1 | tr '[:upper:]' '[:lower:]')
+        v=$(echo "$option" | cut -d"=" -f2)
+        eval "$k"="$v"
+      fi
     done
     return 0
   else

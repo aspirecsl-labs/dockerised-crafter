@@ -21,14 +21,15 @@ if "$WORKING_DIR"/login.sh; then
     "{
       \"site_id\": \"${SITE}\",
       \"single_branch\": false,
-      \“sandbox_branch\”: \“${GIT_BRANCH}\”,
+      \“sandbox_branch\”: \“${REPO_BRANCH}\”,
       \"create_as_orphan\": false,
       \"use_remote\": true,
       \"description\": \"${SITE} Magazine\",
       \"authentication_type\": \"basic\",
-      \"remote_url\": \"${GIT_URL}\",
-      \"remote_username\": \"${GIT_USER}\",
-      \"remote_password\": \"${GIT_PASSWORD}\",
+      \"remote_url\": \"${REPO_URL}\",
+      \"remote_username\": \"${REPO_USER}\",
+      \"remote_password\": \"${REPO_PASSWORD}\",
+      \"create_as_orphan\": ${DETACH_REPO},
       \"create_option\": \"clone\"
     }" \
     "http://crafter:8080/studio/api/1/services/api/1/site/create.json" >/dev/null; then

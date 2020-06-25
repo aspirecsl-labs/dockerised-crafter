@@ -56,7 +56,7 @@ source "$CRAFTER_SCRIPTS_HOME"/lib.sh
 command=$1
 if ! enumerateKeyValuePairs "$2"; then
   usage
-  return 1
+  exit 1
 fi
 
 IMAGE=aspirecsl/crafter-cms-${INTERFACE}
@@ -93,7 +93,7 @@ volume)
   echo "Volume container: $(docker inspect "${container}" --format='{{.HostConfig.VolumesFrom}}')"
   echo ""
   ;;
-backup | restore | status | version)
+backup | mode | restore | status | version)
   if [ "$command" = 'status' ]; then
     echo -e "\n------------------------------------------------------------------------"
     echo "Crafter ${INTERFACE} container status"

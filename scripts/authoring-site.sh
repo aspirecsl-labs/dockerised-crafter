@@ -43,7 +43,7 @@ source "${CRAFTER_SCRIPTS_HOME}/lib.sh"
 command=$1
 if ! enumerateKeyValuePairs "$2"; then
   usage
-  return 1
+  exit 1
 fi
 
 IMAGE=aspirecsl/crafter-cms-${INTERFACE}
@@ -68,20 +68,52 @@ if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}");
   exit 1
 fi
 
+# always prompt for sandbox branch
+REPO_BRANCH=$(input "${SITE} Repo Branch (default: master)" "y" "n")
+
+if [ "$(docker exec "${container}" echo "${CONTAINER_MODE}")" = 'dev' ]; then
+  DETACH_REPO=false
+  # input "label" "nullable" "sensitive"
+  REPO_BRANCH=$(input "${SITE} Repo Branch " "n" "n")
+  if ! [[ ${REPO_BRANCH} =~ ^feature|bugfix|hotfix/[-_a-zA-Z0-9]+$ ]]; then
+    echo "" >&2
+    echo "Site branches intended for development should start with 'bugfix', 'feature' or 'hotfix'" >&2
+    echo "" >&2
+    exit 1
+  fi
+else
+  DETACH_REPO=true
+  REPO_USER=$(readProperty "${CRAFTER_HOME}/.default_repo_properties" "repo_user")
+  REPO_URL=$(readProperty "${CRAFTER_HOME}/.default_repo_properties" "${SITE}_repo")
+  REPO_PASSWORD=$(readProperty "${CRAFTER_HOME}/.default_repo_properties" "repo_password")
+  # input "label" "nullable" "sensitive"
+  REPO_BRANCH=$(input "${SITE} Repo Branch (default: master)" "y" "n")
+  REPO_BRANCH=${REPO_BRANCH:-master}
+fi
+
 RANDOM=$(date '+%s')
 NETWORK="cms_${INTERFACE}_nw_${RANDOM}"
 docker network create "${NETWORK}"
 docker network connect --alias crafter "${NETWORK}" "${container}"
 
-GIT_URL=$(readProperty "${CRAFTER_HOME}/.repoproperties" "${SITE}_repo")
-export GIT_URL
+# input "label" "nullable" "sensitive"
+REPO_URL=${REPO_URL:-$(input "${SITE} Repo URL" "n" "n")}
+REPO_USER=${REPO_USER:-$(input "${SITE} Repo user" "n" "n")}
+REPO_PASSWORD=${REPO_PASSWORD:-$(input "${SITE} Repo password" "n" "y")}
+
+export REPO_URL
+export REPO_USER
+export REPO_BRANCH
+export DETACH_REPO
+export REPO_PASSWORD
 
 docker run \
   --rm \
-  --env GIT_URL \
-  --env GIT_USER \
-  --env GIT_BRANCH \
-  --env GIT_PASSWORD \
+  --env REPO_URL \
+  --env REPO_USER \
+  --env REPO_BRANCH \
+  --env DETACH_REPO \
+  --env REPO_PASSWORD \
   --network "${NETWORK}" \
   "${DRIVER_IMAGE_REFERENCE}" site.sh "${SITE}" "${command}"
 
