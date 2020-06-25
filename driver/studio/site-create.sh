@@ -5,7 +5,8 @@ COOKIE_JAR=${COOKIE_JAR:-/tmp/cookies_$$.txt}
 export COOKIE_JAR
 
 if /studio/login.sh; then
-  if curl --location \
+  if curl --verbose \
+    --location \
     --request POST \
     --cookie-jar "${COOKIE_JAR}" \
     --cookie "${COOKIE_JAR}" \
@@ -29,7 +30,6 @@ if /studio/login.sh; then
       \"create_option\": \"clone\"
     }" \
     "http://crafter:8080/studio/api/1/services/api/1/site/create.json" >/dev/null; then
-    echo "${COOKIE_JAR}"
     exit 0
   else
     echo ""
