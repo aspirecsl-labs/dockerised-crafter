@@ -81,37 +81,21 @@ if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}");
   exit 1
 fi
 
+if [ "$(docker exec "${container}" env | grep CONTAINER_MODE | cut -f2 -d=)" = 'dev' ]; then
+  DETACH_REPO=false
+else
+  DETACH_REPO=true
+fi
+
 echo ""
 # input "label" "nullable" "sensitive"
 CRAFTER_USER=$(input "Crafter username?" "n" "n")
 CRAFTER_PASSWORD=$(input "Crafter password?" "n" "y")
-echo ""
-
-if [ "$(docker exec "${container}" env | grep CONTAINER_MODE | cut -f2 -d=)" = 'dev' ]; then
-  DETACH_REPO=false
-  # input "label" "nullable" "sensitive"
-  REPO_BRANCH=$(input "${SITE} repo branch? " "n" "n")
-  while ! [[ ${REPO_BRANCH} =~ ^feature|bugfix|hotfix/[-_a-zA-Z0-9]+$ ]]; do
-    echo "" >&2
-    echo "Repo branches intended for development should start with 'bugfix', 'feature' or 'hotfix'" >&2
-    echo "" >&2
-    # input "label" "nullable" "sensitive"
-    REPO_BRANCH=$(input "${SITE} repo branch? " "n" "n")
-  done
-else
-  DETACH_REPO=true
-  REPO_USER=$(readProperty "${CRAFTER_HOME}/repo.properties" "repo_user")
-  REPO_URL=$(readProperty "${CRAFTER_HOME}/repo.properties" "${SITE}_repo")
-  REPO_PASSWORD=$(readProperty "${CRAFTER_HOME}/repo.properties" "repo_password")
-  # input "label" "nullable" "sensitive"
-  REPO_BRANCH=$(input "${SITE} repo branch (default: master)? " "y" "n")
-  REPO_BRANCH=${REPO_BRANCH:-master}
-fi
-
-# input "label" "nullable" "sensitive"
+REPO_BRANCH=$(input "${SITE} repo branch? " "n" "n")
 REPO_URL=${REPO_URL:-$(input "${SITE} repo url? " "n" "n")}
 REPO_USER=${REPO_USER:-$(input "${SITE} repo user? " "n" "n")}
 REPO_PASSWORD=${REPO_PASSWORD:-$(input "${SITE} repo password? " "n" "y")}
+echo ""
 
 PORT=8080
 
