@@ -87,16 +87,17 @@ CRAFTER_USER=$(input "Crafter username?" "n" "n")
 CRAFTER_PASSWORD=$(input "Crafter password?" "n" "y")
 echo ""
 
-if [ "$(docker exec "${container}" echo "${CONTAINER_MODE}")" = 'dev' ]; then
+if [ "$(docker exec "${container}" env | grep CONTAINER_MODE | cut -f2 -d=)" = 'dev' ]; then
   DETACH_REPO=false
   # input "label" "nullable" "sensitive"
   REPO_BRANCH=$(input "${SITE} repo branch? " "n" "n")
-  if ! [[ ${REPO_BRANCH} =~ ^feature|bugfix|hotfix/[-_a-zA-Z0-9]+$ ]]; then
+  while ! [[ ${REPO_BRANCH} =~ ^feature|bugfix|hotfix/[-_a-zA-Z0-9]+$ ]]; do
     echo "" >&2
     echo "Repo branches intended for development should start with 'bugfix', 'feature' or 'hotfix'" >&2
     echo "" >&2
-    exit 1
-  fi
+    # input "label" "nullable" "sensitive"
+    REPO_BRANCH=$(input "${SITE} repo branch? " "n" "n")
+  done
 else
   DETACH_REPO=true
   REPO_USER=$(readProperty "${CRAFTER_HOME}/repo.properties" "repo_user")
@@ -126,7 +127,7 @@ export CRAFTER_PASSWORD
 RANDOM=$(date '+%s')
 NETWORK="cms_${INTERFACE}_nw_${RANDOM}"
 docker network create "${NETWORK}" >/dev/null
-docker network connect --alias crafter "${NETWORK}" "${container}"
+docker network connect --alias crafter --alias "${container}" "${NETWORK}" "${container}"
 
 docker run \
   --rm \
