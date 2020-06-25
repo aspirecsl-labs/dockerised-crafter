@@ -41,13 +41,16 @@ backup | login | mode | port | restore | show | start | start-dev | status | ver
   CMD_PREFIX="${CMD_PREFIX:-$(basename "$0")} $command"
   export CMD_PREFIX
   if [ "${command}" = 'start' ]; then
-    # shellcheck disable=SC2068
     "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}-start.sh" "${2}"
   elif [ "${command}" = 'start-dev' ]; then
-    # shellcheck disable=SC2068
-    "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}-start.sh" "mode=dev,${2}"
+    args="${2}"
+    if [ -z "$args" ]; then
+      args="mode=dev"
+    else
+      args="mode=dev,${args}"
+    fi
+    "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}-start.sh" ${args}
   else
-    # shellcheck disable=SC2068
     "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}-executor.sh" "$command" "${2}"
   fi
   ;;
