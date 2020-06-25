@@ -3,11 +3,11 @@ set -e
 
 usage() {
   echo ""
-  echo "Usage: $(basename "$0") [version]"
+  echo "Usage: $(basename "$0") version"
   echo ""
-  echo "Build a Crafter CMS Delivery image"
+  echo "version  The required version of Crafter CMS Delivery service "
   echo ""
-  echo "  version  The Crafter version to use instead of the default version from the 'release' file"
+  echo "Build an image containing the specified version of Crafter CMS Delivery service"
   echo ""
 }
 
@@ -20,30 +20,16 @@ source "${CRAFTER_SCRIPTS_HOME}"/lib.sh
 crafter_version_regex='^[0-9]+.[0-9]+.[0-9]+$'
 if [[ "$1" =~ $crafter_version_regex ]]; then
   VERSION="$1"
+  export VERSION
 else
-  if [ -n "$1" ]; then
-    usage
-    exit 0
-  fi
+  usage
+  exit 1
 fi
 
 cd "${CRAFTER_HOME}/${INTERFACE}"
 IMAGE=$(readProperty "./release" "IMAGE")
 
-VERSION=${VERSION:-$(readProperty "./release" "VERSION")}
-export VERSION
-
-DOWNLOAD_LINK=$(readProperty "./release" "BUNDLE_URL")
-export DOWNLOAD_LINK
-
-SHA512_DOWNLOAD_LINK=$(readProperty "./release" "BUNDLE_SHA512_URL")
-export SHA512_DOWNLOAD_LINK
-
-docker build \
-  --build-arg VERSION \
-  --build-arg DOWNLOAD_LINK \
-  --build-arg SHA512_DOWNLOAD_LINK \
-  --tag "${IMAGE}:${VERSION}" .
+docker build --build-arg VERSION --tag "${IMAGE}:${VERSION}" .
 
 docker tag "${IMAGE}:${VERSION}" "${IMAGE}:latest"
 

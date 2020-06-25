@@ -1,4 +1,3 @@
 NAME=Crafter CMS
 SUBSYSTEM=Delivery
-VERSION=3.1.5
 IMAGE=aspirecsl/crafter-cms-delivery
