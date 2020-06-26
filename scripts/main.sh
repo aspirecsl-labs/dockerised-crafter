@@ -10,6 +10,7 @@ usage() {
   echo "Contexts:"
   echo "  container    Manage Crafter ${INTERFACE} containers"
   echo "  site-<name>  Manage Crafter ${INTERFACE} site with the given name"
+  echo "  volume       Manage Crafter ${INTERFACE} data volume containers"
   echo ""
   echo "Run '${CMD_PREFIX:-$(basename "$0")} CONTEXT --help' for more information about the commands available to a context."
 }
@@ -24,7 +25,7 @@ if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME"
 fi
 
 case $1 in
-container)
+container|volume)
   CONTEXT=$1
   export CONTEXT
   CMD_PREFIX="${CMD_PREFIX:-$(basename "$0")} $1"

@@ -18,8 +18,10 @@ usage() {
   echo "    http_port:      The host machine port to bind the container's HTTP (80) port. Example \"http_port=1080\""
   echo "    https_port:     The host machine port to bind the container's HTTPS (443) port. Example \"https_port=10443\""
   echo "    mode:           The container start mode. Allowed values are 'demo' (default) and 'dev'. Example \"mode=dev\""
-  echo "                    In 'demo' mode local volumes are not mounted and changes made to sites will be lost on container termination."
-  echo "                    In 'dev' mode local volumes are mounted as '/opt/crafter/data' and '/opt/crafter/backups'. Changes made to sites persist even after container termination."
+  echo "                    In 'demo' mode if a volume container is not specified then the 'data' and 'backups' folder in the "
+  echo "                    Crafter ${INTERFACE} container are bound to the container lifecycle."
+  echo "                    In 'dev' mode if a volume container is not specified then a new one is created so that the 'data' "
+  echo "                    and 'backups' folder in the Crafter ${INTERFACE} container can persist a container shutdown."
   echo "    port:           The host machine port to bind the container's Crafter engine port. Example \"port=8080\""
   echo "    volume:         The container (name) from which Crafter container obtains its user data volumes. Example \"volume=crafter-auth-3.1.5-volume\""
 }
@@ -63,8 +65,8 @@ echo "Starting container from image: ${IMAGE_REFERENCE}"
 
 DOCKER_RUN_CMD="docker run --rm --env TZ=Europe/London --env CONTAINER_MODE"
 
-if [ "${mode}" = 'dev' ]; then
-  if [ "${volume:-X}" = 'X' ]; then
+if [ "${volume:-X}" = 'X' ]; then
+  if [ "${mode}" = 'dev' ]; then
     echo ""
     RANDOM=$(date '+%s')
     volume="cms_${INTERFACE}_vol_${RANDOM}"
@@ -77,7 +79,9 @@ if [ "${mode}" = 'dev' ]; then
       --volume "${CRAFTER_HOME}/workspace/${volume}_backups":/opt/crafter/backups \
       --name "$volume" tianon/true /bin/true
     echo ""
+    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} --volumes-from ${volume}"
   fi
+else
   DOCKER_RUN_CMD="${DOCKER_RUN_CMD} --volumes-from ${volume}"
 fi
 
@@ -86,15 +90,15 @@ if [ "${alt_id:-X}" != 'X' ]; then
 fi
 
 if [ "${http_port:-X}" = 'X' ]; then
-    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 80:80"
+  DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 80:80"
 else
-    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p ${http_port}:80"
+  DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p ${http_port}:80"
 fi
 
 if [ "${https_port:-X}" = 'X' ]; then
-    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 443:443"
+  DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 443:443"
 else
-    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p ${https_port}:443"
+  DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p ${https_port}:443"
 fi
 
 if [ "${port:-X}" = 'X' ]; then
