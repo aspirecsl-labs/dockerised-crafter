@@ -75,6 +75,8 @@ if [ "${volume:-X}" = 'X' ]; then
     mkdir -p "${CRAFTER_HOME}/workspace/${volume}_data" "${CRAFTER_HOME}/workspace/${volume}_backups"
     docker create \
       --env TZ=Europe/London \
+      --label container.type="CRAFTER-VOLUME" \
+      --label attaches.to="CRAFTER-${INTERFACE}" \
       --volume "${CRAFTER_HOME}/workspace/${volume}_data":/opt/crafter/data \
       --volume "${CRAFTER_HOME}/workspace/${volume}_backups":/opt/crafter/backups \
       --name "$volume" tianon/true /bin/true
