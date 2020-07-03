@@ -69,7 +69,7 @@ if [ "${volume:-X}" = 'X' ]; then
   if [ "${mode}" = 'dev' ]; then
     echo ""
     RANDOM=$(date '+%s')
-    volume="cms_${INTERFACE}_vol_${RANDOM}"
+    volume="crafter_${INTERFACE}_vol_${RANDOM}"
     echo "No volume container specified"
     echo "Creating a volume container with name $volume"
     mkdir -p "${CRAFTER_HOME}/workspace/${volume}_data" "${CRAFTER_HOME}/workspace/${volume}_backups"
@@ -92,13 +92,21 @@ if [ "${alt_id:-X}" != 'X' ]; then
 fi
 
 if [ "${http_port:-X}" = 'X' ]; then
-  DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 80:80"
+  if [ "${INTERFACE}" = 'authoring' ]; then
+    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 80:80"
+  else
+    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 10080:80"
+  fi
 else
   DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p ${http_port}:80"
 fi
 
 if [ "${https_port:-X}" = 'X' ]; then
-  DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 443:443"
+  if [ "${INTERFACE}" = 'authoring' ]; then
+    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 443:443"
+  else
+    DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p 10443:443"
+  fi
 else
   DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -p ${https_port}:443"
 fi

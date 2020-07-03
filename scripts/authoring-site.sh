@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-set -x
 
 usage() {
   echo ""
@@ -26,36 +25,16 @@ usage() {
   echo "    version:         The Crafter version to use instead of default. Example \"version=3.1.7\""
 }
 
-createNetworkAndAttachCrafterContainer() {
-  RANDOM=$(date '+%s')
-  eval NETWORK="cms_${INTERFACE}_nw_${RANDOM}"
-  docker network create "${NETWORK}" >/dev/null
-  sleep 1s
-  docker network connect --alias crafter --alias "${container}" "${NETWORK}" "${container}" >/dev/null
-  sleep 1s
-}
-
-detachCrafterContainerAndDeleteNetwork() {
-  if [ -n "$NETWORK" ]; then
-    nw_id=$(docker network ls --filter name="$NETWORK" --format '{{.ID}}')
-    if [ -n "$nw_id" ]; then
-      sleep 1s
-      docker network disconnect --force "${nw_id}" "${container}" >/dev/null
-      sleep 1s
-      docker network rm "${nw_id}" >/dev/null
-    fi
-  fi
-}
-
 runSiteCreateCommand() {
+  CRAFTER_USER="admin"
+  CRAFTER_PASSWORD="admin"
+
   echo ""
   # input "label" "nullable" "sensitive"
-  CRAFTER_USER=$(input "Crafter username?" "n" "n")
-  CRAFTER_PASSWORD=$(input "Crafter password?" "n" "y")
   REPO_URL=$(input "${SITE} repo url? " "n" "n")
-  REPO_BRANCH=$(input "${SITE} repo branch? " "n" "n")
   REPO_USER=$(input "${SITE} repo user? " "n" "n")
   REPO_PASSWORD=$(input "${SITE} repo password? " "n" "y")
+  REPO_BRANCH=$(input "${SITE} repo branch? " "n" "n")
   echo ""
 
   if [ "$(docker exec "${container}" env | grep CONTAINER_MODE | cut -f2 -d=)" = 'dev' ]; then
@@ -72,7 +51,8 @@ runSiteCreateCommand() {
   export REPO_PASSWORD
   export CRAFTER_PASSWORD
 
-  createNetworkAndAttachCrafterContainer
+  network="$(createNetworkAndAttachCrafterContainer "crafter_authoring_nw" "$container")"
+  export network
 
   docker run \
     --rm \
@@ -84,27 +64,32 @@ runSiteCreateCommand() {
     --env CRAFTER_USER \
     --env REPO_PASSWORD \
     --env CRAFTER_PASSWORD \
-    --network "${NETWORK}" \
+    --network "${network}" \
     "${DRIVER_IMAGE_REFERENCE}" "/site.sh" "${SITE}" "${command}"
 
-  detachCrafterContainerAndDeleteNetwork
+  detachCrafterContainerAndDeleteNetwork "$network" "$container"
 }
 
 runSiteContextCommand() {
-  createNetworkAndAttachCrafterContainer
+  network="$(createNetworkAndAttachCrafterContainer "crafter_authoring_nw" "$container")"
+  export network
 
   docker run \
     --rm \
     --env VERBOSE \
-    --network "${NETWORK}" \
+    --network "${network}" \
     "${DRIVER_IMAGE_REFERENCE}" "/site.sh" "${SITE}" "${command}"
 
-  detachCrafterContainerAndDeleteNetwork
+  detachCrafterContainerAndDeleteNetwork "$network" "$container"
 }
 
-trap detachCrafterContainerAndDeleteNetwork EXIT
+cleanup() {
+  detachCrafterContainerAndDeleteNetwork "$network" "$container"
+}
 
-if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME" ]; then
+trap cleanup EXIT
+
+if [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME" ]; then
   echo "Failed to setup the execution context!"
   echo "Are you running this script directly?"
   echo ""
@@ -138,15 +123,6 @@ if [ -n "$verbose" ]; then
   export VERBOSE
 fi
 
-IMAGE=aspirecsl/crafter-cms-${INTERFACE}
-# shellcheck disable=SC2154
-# version may be specified as an option from the command line
-if [ -n "$version" ]; then
-  eval IMAGE_REFERENCE="${IMAGE}:${version}"
-else
-  eval IMAGE_REFERENCE="${IMAGE}"
-fi
-
 DRIVER_IMAGE=aspirecsl/crafter-cms-driver
 # shellcheck disable=SC2154
 # driver_version may be specified as an option from the command line
@@ -156,9 +132,20 @@ else
   eval DRIVER_IMAGE_REFERENCE="${DRIVER_IMAGE}"
 fi
 
-if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}"); then
-  exit 1
+if [ -z "$container" ]; then
+  IMAGE=aspirecsl/crafter-cms-authoring
+  # shellcheck disable=SC2154
+  # version may be specified as an option from the command line
+  if [ -n "$version" ]; then
+    eval IMAGE_REFERENCE="${IMAGE}:${version}"
+  else
+    eval IMAGE_REFERENCE="${IMAGE}"
+  fi
+  if ! container=$(getUniqueRunningContainer "authoring" "${IMAGE_REFERENCE}"); then
+    exit 1
+  fi
 fi
+export container
 
 case $command in
 context-[_-0-9a-zA-Z]*)

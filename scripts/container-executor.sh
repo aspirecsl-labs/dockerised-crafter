@@ -78,8 +78,10 @@ if [ "$command" = 'show' ]; then
   exit 0
 fi
 
-if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}"); then
-  exit 1
+if [ -z "$container" ]; then
+  if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}"); then
+    exit 1
+  fi
 fi
 
 case $command in

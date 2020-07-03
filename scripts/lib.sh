@@ -6,6 +6,33 @@ arrayContainsElement() {
   return 1
 }
 
+createNetworkAndAttachCrafterContainer() {
+  local _container="$2"
+  local _alias="${3:-crafter}"
+  local random
+  random=$(date '+%s')
+  local _network="${1}_${random}"
+  docker network create "${_network}" >/dev/null
+  sleep 1s
+  docker network connect --alias "${_alias}" --alias "${_container}" "${_network}" "${_container}" >/dev/null
+  sleep 1s
+  echo "${_network}"
+}
+
+detachCrafterContainerAndDeleteNetwork() {
+  local _network=$1
+  local _container=$2
+  if [ -n "$_network" ]; then
+    nw_id=$(docker network ls --filter name="$_network" --format '{{.ID}}')
+    if [ -n "$nw_id" ]; then
+      sleep 1s
+      docker network disconnect --force "${nw_id}" "${_container}" >/dev/null
+      sleep 1s
+      docker network rm "${nw_id}" >/dev/null
+    fi
+  fi
+}
+
 enumerateKeyValuePairs() {
   overrides_regex='^([.-_a-zA-Z0-9]+=[.-_a-zA-Z0-9]+,)*[.-_a-zA-Z0-9]+=[.-_a-zA-Z0-9]+$'
   if [[ $1 =~ $overrides_regex ]]; then
@@ -31,26 +58,25 @@ enumerateKeyValuePairs() {
 getUniqueRunningContainer() {
   local interface="$1"
   local image_reference="$2"
-  # shellcheck disable=SC2154
-  # container may be specified as an option from the command line
-  if [ -z "${container}" ] && [ "$(docker container ls --format "{{.ID}}" --filter="ancestor=${image_reference}" | wc -l)" -gt 1 ]; then
+  if [ "$(docker container ls --format "{{.ID}}" --filter="ancestor=${image_reference}" | wc -l)" -gt 1 ]; then
     echo "Multiple running containers found for image: ${image_reference}" >&2
     echo "Try again specifying the container id or name using \"container={id|name}\" override" >&2
     echo "To find all the running containers, run 'crafter ${interface} container show'" >&2
     return 1
   fi
 
-  container=${container:-$(docker container ls --format "{{.ID}}" --filter="ancestor=${image_reference}")}
+  local _container
+  _container=$(docker container ls --format "{{.ID}}" --filter="ancestor=${image_reference}")
 
-  if [ -z "$container" ]; then
+  if [ -z "$_container" ]; then
     echo "ERROR: Unable to find a running Crafter ${interface} container" >&2
     echo "" >&2
-    echo "To start a Crafter ${interface} container, run 'crafter authoring container start'" >&2
+    echo "To start a Crafter ${interface} container, run 'crafter ${interface} container start'" >&2
     echo "For a specific Crafter version, try again with 'version=x.y.z' override where 'x.y.z' is the required version" >&2
     return 1
   fi
 
-  echo "$container"
+  echo "$_container"
   return 0
 }
 

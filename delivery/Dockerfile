@@ -6,13 +6,15 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG VERSION
 
+COPY id_rsa /
 COPY sudoers /
 COPY release /
+COPY id_rsa.pub /
 COPY crafter-http.conf /
 COPY crafter-https.conf /
 COPY docker-entrypoint.sh /
 COPY docker-healthcheck.sh /
-COPY crafter-self-signed.crt /
+COPY crafter-self-signed.cert /
 COPY crafter-self-signed.key /
 
 RUN apt-get update && \
@@ -73,9 +75,12 @@ RUN apt-get update && \
         ln -sf /etc/apache2/sites-available/crafter-http.conf /etc/apache2/sites-enabled/crafter-http.conf && \
         cp /crafter-https.conf /etc/apache2/sites-available && \
         ln -sf /etc/apache2/sites-available/crafter-https.conf /etc/apache2/sites-enabled/crafter-https.conf && \
-        cp /crafter-self-signed.crt /etc/ssl/certs && chmod 644 /etc/ssl/certs/crafter-self-signed.crt && \
+        cp /crafter-self-signed.cert /etc/ssl/certs && chmod 644 /etc/ssl/certs/crafter-self-signed.cert && \
         cp /crafter-self-signed.key /etc/ssl/certs && chmod 600 /etc/ssl/certs/crafter-self-signed.key && \
         a2enmod ssl headers proxy_http && \
+        mkdir -p /home/crafter/.ssh && mv /id_rsa* /home/crafter/.ssh && \
+        chmod 700 /home/crafter/.ssh && chmod 600 /home/crafter/.ssh/id_rsa && chmod 644 /home/crafter/.ssh/id_rsa.pub && \
+        chown -R crafter:crafter /home/crafter/.ssh && \
         rm -fr /var/lib/apt/lists/* $DOWNLOAD_TO ${SHA512_DOWNLOAD_TO}; \
     fi
 

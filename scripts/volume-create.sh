@@ -35,7 +35,7 @@ fi
 echo ""
 echo "Creating a Crafter ${INTERFACE} data volume container"
 RANDOM=$(date '+%s')
-prefix=${prefix:-cms_${INTERFACE}_vol}
+prefix=${prefix:-crafter_${INTERFACE}_vol}
 if ! [[ $prefix =~ ^[_a-z0-9]+$ ]]; then
   usage
   exit 1

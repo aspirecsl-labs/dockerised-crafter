@@ -26,9 +26,9 @@ runOrDebugCrafter() {
 }
 
 status() {
+  mariaDbStatus
   elasticsearchStatus
   crafterModuleStatus "Crafter Engine" "$TOMCAT_HTTP_PORT" "" "1"
-  crafterModuleStatus "Crafter Studio" "$TOMCAT_HTTP_PORT" "/studio" "2"
   crafterModuleStatus "Crafter Search" "$TOMCAT_HTTP_PORT" "/crafter-search" "1"
   crafterModuleStatus "Crafter Deployer" "$DEPLOYER_PORT" "" "1" "$DEPLOYER_PID"
 }
@@ -49,6 +49,18 @@ elasticsearchStatus() {
     echo -e "\033[38;5;196m"
     echo "Elasticsearch is not running or is unreachable on port $ES_PORT"
     echo -e "\033[0m"
+  fi
+}
+
+function mariaDbStatus() {
+  echo "------------------------------------------------------------------------"
+  echo "MariaDB status"
+  echo "------------------------------------------------------------------------"
+  if [ -s "$MARIADB_PID" ]; then
+    echo -e "PID \t"
+    cat "$MARIADB_PID"
+  else
+    echo "MariaDB is not running."
   fi
 }
 
@@ -124,6 +136,15 @@ elif [ "$1" = 'version' ]; then
   echo ""
 elif [ "$1" = 'backup' ]; then
   exec ${CRAFTER_BIN_DIR}/crafter.sh backup
+elif [ "$1" = 'init' ]; then
+  if [ -z "$2" ]; then
+    echo ""
+    echo "ERROR: mandatory site id argument not passed"
+    echo ""
+    exit 1
+  fi
+  ssh-keyscan -t rsa crafter-authoring >~/.ssh/known_hosts
+  exec ${CRAFTER_BIN_DIR}/init-site.sh -b live "$2" ssh://crafter@crafter-authoring:/opt/crafter/data/repos/sites/"$2"/published
 else
   exec "$@"
 fi

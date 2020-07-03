@@ -16,6 +16,7 @@ if /studio/login.sh; then
     \"description\": \"${SITE} Magazine\",
     \"authentication_type\": \"basic\",
     \"remote_url\": \"${REPO_URL}\",
+    \"remote_branch\": \"${REPO_BRANCH}\",
     \"remote_username\": \"${REPO_USER}\",
     \"remote_password\": \"${REPO_PASSWORD}\",
     \"create_as_orphan\": ${DETACH_REPO},

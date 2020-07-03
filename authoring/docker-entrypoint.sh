@@ -30,11 +30,24 @@ runOrDebugCrafter() {
 }
 
 status() {
+  mariaDbStatus
   elasticsearchStatus
   crafterModuleStatus "Crafter Engine" "$TOMCAT_HTTP_PORT" "" "1"
   crafterModuleStatus "Crafter Studio" "$TOMCAT_HTTP_PORT" "/studio" "2"
   crafterModuleStatus "Crafter Search" "$TOMCAT_HTTP_PORT" "/crafter-search" "1"
   crafterModuleStatus "Crafter Deployer" "$DEPLOYER_PORT" "" "1" "$DEPLOYER_PID"
+}
+
+function mariaDbStatus() {
+  echo "------------------------------------------------------------------------"
+  echo "MariaDB status"
+  echo "------------------------------------------------------------------------"
+  if [ -s "$MARIADB_PID" ]; then
+    echo -e "PID \t"
+    cat "$MARIADB_PID"
+  else
+    echo "MariaDB is not running."
+  fi
 }
 
 elasticsearchStatus() {
