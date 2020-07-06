@@ -34,7 +34,7 @@ detachCrafterContainerAndDeleteNetwork() {
 }
 
 enumerateKeyValuePairs() {
-  overrides_regex='^([.-_a-zA-Z0-9]+=[.-_a-zA-Z0-9]+,)*[.-_a-zA-Z0-9]+=[.-_a-zA-Z0-9]+$'
+  overrides_regex='^([_a-z]*=[-._0-9a-zA-Z]*,)*[_a-z]*=[-._0-9a-zA-Z]*$'
   if [[ $1 =~ $overrides_regex ]]; then
     IFS="," read -r -a options <<<"$1"
     for option in "${options[@]}"; do

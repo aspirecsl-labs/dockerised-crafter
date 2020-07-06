@@ -6,6 +6,9 @@ usage() {
   backup)
     CMD_SUMMARY="Backup the data in the Crafter ${INTERFACE} container"
     ;;
+  log)
+    CMD_SUMMARY="Show the Crafter ${INTERFACE} container log"
+    ;;
   login)
     CMD_SUMMARY="Login to the Crafter ${INTERFACE} container"
     ;;
@@ -85,6 +88,9 @@ if [ -z "$container" ]; then
 fi
 
 case $command in
+log)
+  docker container logs "$container"
+  ;;
 login)
   docker exec -it "$container" "/docker-entrypoint.sh" /bin/bash
   ;;
