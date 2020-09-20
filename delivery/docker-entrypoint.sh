@@ -2,6 +2,7 @@
 set -e
 
 runOrDebugCrafter() {
+  local catalinaMode
   if [ "$1" = 'debug' ]; then
     catalinaMode="jpda run"
   else
@@ -38,6 +39,7 @@ elasticsearchStatus() {
   echo "Elasticsearch status"
   echo "------------------------------------------------------------------------"
 
+  local esStatusOut
   if esStatusOut=$(curl --silent -f "http://localhost:$ES_PORT/_cat/nodes?h=uptime,version"); then
     echo -e "PID\t"
     cat "$ES_PID"
@@ -69,6 +71,7 @@ crafterModuleStatus() {
   echo "$1 status"
   echo "------------------------------------------------------------------------"
 
+  local statusOut
   if statusOut=$(curl --silent -f "http://localhost:$2$3/api/$4/monitoring/status?token=defaultManagementToken"); then
     if [ "${5:-X}" != 'X' ]; then
       echo -e "PID\t"
@@ -76,6 +79,7 @@ crafterModuleStatus() {
     fi
     echo -e "Uptime (in seconds):\t"
     echo "$statusOut" | grep -Eo '"uptime":\d+' | awk -F ":" '{print $2}'
+    local versionOut
     if versionOut=$(curl --silent -f "http://localhost:$2$3/api/$4/monitoring/version?token=defaultManagementToken"); then
       echo -e "Version:\t"
       echo -n "$(echo "$versionOut" | grep -Eo '"packageVersion":"[^"]+"' | awk -F ":" '{print $2}')"
@@ -97,7 +101,8 @@ export CRAFTER_BACKUPS_DIR=$CRAFTER_HOME/backups
 sudo chown -R crafter:crafter $CRAFTER_HOME/data
 sudo chown -R crafter:crafter $CRAFTER_HOME/backups
 
-# shellcheck source=/opt/crafter/bin/crafter-setenv.sh
+# source=<repo_root>/scripts/lib.sh
+# shellcheck disable=SC1090
 source "${CRAFTER_BIN_DIR}/crafter-setenv.sh"
 
 if [ "$1" = 'run' ]; then
@@ -115,10 +120,6 @@ elif [ "$1" = 'recovery' ]; then
   echo "------------------------------------------------------------------"
   echo ""
   exec /bin/bash
-elif [ "$1" = 'mode' ]; then
-  echo ""
-  echo "Container mode: ${CONTAINER_MODE}"
-  echo ""
 elif [ "$1" = 'status' ]; then
   echo ""
   status

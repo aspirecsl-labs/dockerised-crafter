@@ -98,6 +98,7 @@ EXPOSE \
     # Elasticsearch port
     9202
 
+VOLUME ["/opt/crafter/bin"]
 
 USER crafter
 WORKDIR /opt/crafter

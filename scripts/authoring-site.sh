@@ -10,10 +10,12 @@ usage() {
   echo "name  The name of the site to manage"
   echo ""
   echo "Commands:"
-  echo "  context-status   Show the status of the specified site's context"
-  echo "  create           Create a site on the container"
-  echo "  context-destroy  Destroy the specified site's context"
-  echo "  context-rebuild  Rebuild the specified site's context"
+  echo "  create   Create a site."
+  echo "  delete   Delete the given site."
+  echo "  info     Show the site properties."
+  echo "  reset    Reset the specified site."
+  echo "  refresh  Refresh the specified site."
+  echo "  status   Show the status of the specified site."
   echo ""
   echo "Overrides:"
   echo "Allow users to supply overrides for commands"
@@ -26,29 +28,30 @@ usage() {
 }
 
 runSiteCreateCommand() {
-  CRAFTER_USER="admin"
-  CRAFTER_PASSWORD="admin"
+  local CRAFTER_USER="admin"
+  local CRAFTER_PASSWORD="admin"
 
-  echo ""
+  local REPO_URL
+  local REPO_USER
+  local REPO_BRANCH
+  local REPO_PASSWORD
+  local SANDBOX_BRANCH
+
   # input "label" "nullable" "sensitive"
-  REPO_URL=$(input "${SITE} repo url? " "n" "n")
-  REPO_USER=$(input "${SITE} repo user? " "n" "n")
-  REPO_PASSWORD=$(input "${SITE} repo password? " "n" "y")
-  REPO_BRANCH=$(input "${SITE} repo branch? " "n" "n")
-  echo ""
-
-  if [ "$(docker exec "${container}" env | grep CONTAINER_MODE | cut -f2 -d=)" = 'dev' ]; then
-    DETACH_REPO=false
-  else
-    DETACH_REPO=true
-  fi
+  REPO_URL=$(input "Repository URL for ${SITE} site:" "n" "n")
+  REPO_USER=$(input "Username for the ${SITE} repo:" "n" "n")
+  REPO_USER=$(input "Password for the ${SITE} repo:" "n" "y")
+  REPO_BRANCH=$(input "Repo branch to build ${SITE} (default: master):" "y" "n")
+  REPO_BRANCH=${REPO_BRANCH:-master}
+  SANDBOX_BRANCH=$(input "Repo branch to persist ${SITE} changes (default: $REPO_BRANCH):" "y" "n")
+  SANDBOX_BRANCH=${SANDBOX_BRANCH:-$REPO_BRANCH}
 
   export REPO_URL
   export REPO_USER
   export REPO_BRANCH
-  export DETACH_REPO
   export CRAFTER_USER
   export REPO_PASSWORD
+  export SANDBOX_BRANCH
   export CRAFTER_PASSWORD
 
   network="$(createNetworkAndAttachCrafterContainer "crafter_authoring_nw" "$container")"
@@ -60,24 +63,34 @@ runSiteCreateCommand() {
     --env REPO_URL \
     --env REPO_USER \
     --env REPO_BRANCH \
-    --env DETACH_REPO \
     --env CRAFTER_USER \
     --env REPO_PASSWORD \
+    --env SANDBOX_BRANCH \
     --env CRAFTER_PASSWORD \
     --network "${network}" \
+    --volumes-from "${volume_container}" \
     "${DRIVER_IMAGE_REFERENCE}" "/site.sh" "${SITE}" "${command}"
 
   detachCrafterContainerAndDeleteNetwork "$network" "$container"
 }
 
-runSiteContextCommand() {
+runSiteCommand() {
+  local CRAFTER_USER="admin"
+  local CRAFTER_PASSWORD="admin"
+
+  export CRAFTER_USER
+  export CRAFTER_PASSWORD
+
   network="$(createNetworkAndAttachCrafterContainer "crafter_authoring_nw" "$container")"
   export network
 
   docker run \
     --rm \
     --env VERBOSE \
+    --env CRAFTER_USER \
+    --env CRAFTER_PASSWORD \
     --network "${network}" \
+    --volumes-from "${volume_container}" \
     "${DRIVER_IMAGE_REFERENCE}" "/site.sh" "${SITE}" "${command}"
 
   detachCrafterContainerAndDeleteNetwork "$network" "$container"
@@ -102,7 +115,8 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 
-# shellcheck source=<repo_root>/scripts/lib.sh
+# source=<repo_root>/scripts/lib.sh
+# shellcheck disable=SC1090
 source "${CRAFTER_SCRIPTS_HOME}/lib.sh"
 
 command=$1
@@ -145,11 +159,14 @@ if [ -z "$container" ]; then
     exit 1
   fi
 fi
-export container
+
+volume_container=$(docker container inspect --format='{{.HostConfig.VolumesFrom}}' "${container}")
+volume_container=${volume_container/[/}
+volume_container=${volume_container/]/}
 
 case $command in
-context-[_-0-9a-zA-Z]*)
-  runSiteContextCommand
+delete | info | refresh | reset | status)
+  runSiteCommand
   ;;
 create)
   runSiteCreateCommand

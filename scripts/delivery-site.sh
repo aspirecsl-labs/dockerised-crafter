@@ -58,6 +58,7 @@ runSiteInitCommand() {
     else
       _authoring_image_reference="${_authoring_image}"
     fi
+    local authoring_container
     if ! authoring_container=$(getUniqueRunningContainer "authoring" "${_authoring_image_reference}"); then
       exit 1
     fi
@@ -67,6 +68,10 @@ runSiteInitCommand() {
   sleep 1s
 
   docker exec -it "$container" "/docker-entrypoint.sh" "$command" "$SITE"
+
+  sleep 1s
+  docker network disconnect --force "${network}" "${authoring_container}" >/dev/null
+  sleep 1s
 
   detachCrafterContainerAndDeleteNetwork "$network" "$container"
 }
@@ -90,7 +95,8 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 
-# shellcheck source=<repo_root>/scripts/lib.sh
+# source=<repo_root>/scripts/lib.sh
+# shellcheck disable=SC1090
 source "${CRAFTER_SCRIPTS_HOME}/lib.sh"
 
 command=$1

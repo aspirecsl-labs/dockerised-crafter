@@ -2,36 +2,22 @@
 set -e
 
 usage() {
+  local CMD_SUMMARY
   case $command in
   backup)
     CMD_SUMMARY="Backup the data in the Crafter ${INTERFACE} container"
     ;;
-  log)
-    CMD_SUMMARY="Show the Crafter ${INTERFACE} container log"
-    ;;
   login)
     CMD_SUMMARY="Login to the Crafter ${INTERFACE} container"
     ;;
-  mode)
-    CMD_SUMMARY="Show the operational mode of the Crafter ${INTERFACE} container"
-    ;;
-  port)
-    CMD_SUMMARY="Show the port bindings of the Crafter ${INTERFACE} container"
-    ;;
   recovery)
     CMD_SUMMARY="Start the Crafter ${INTERFACE} container in recovery mode (CLI access)."
-    ;;
-  show)
-    CMD_SUMMARY="Show all the running Crafter ${INTERFACE} containers"
     ;;
   status)
     CMD_SUMMARY="Show the status of the specified crafter container"
     ;;
   version)
     CMD_SUMMARY="Show the crafter version of the specified container"
-    ;;
-  volume)
-    CMD_SUMMARY="Show the volume container attached to the specified crafter container"
     ;;
   esac
   echo ""
@@ -56,7 +42,8 @@ if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME"
   exit 9
 fi
 
-# shellcheck source=<repo_root>/scripts/lib.sh
+# source=<repo_root>/scripts/lib.sh
+# shellcheck disable=SC1090
 source "$CRAFTER_SCRIPTS_HOME"/lib.sh
 
 command=$1
@@ -74,13 +61,6 @@ else
   eval IMAGE_REFERENCE="${IMAGE}"
 fi
 
-if [ "$command" = 'show' ]; then
-  echo ""
-  docker container ls --format "table {{.ID}}\t{{.Names}}\t{{.Label \"ALT_ID\"}}\t{{.Status}}\t{{.RunningFor}}" --filter="ancestor=${IMAGE_REFERENCE}"
-  echo ""
-  exit 0
-fi
-
 if [ -z "$container" ]; then
   if ! container=$(getUniqueRunningContainer "${INTERFACE}" "${IMAGE_REFERENCE}"); then
     exit 1
@@ -88,23 +68,10 @@ if [ -z "$container" ]; then
 fi
 
 case $command in
-log)
-  docker container logs "$container"
-  ;;
 login)
   docker exec -it "$container" "/docker-entrypoint.sh" /bin/bash
   ;;
-port)
-  echo -e "\nPort bindings:"
-  docker port "${container}"
-  echo ""
-  ;;
-volume)
-  echo ""
-  echo "Volume container: $(docker inspect "${container}" --format='{{.HostConfig.VolumesFrom}}')"
-  echo ""
-  ;;
-backup | mode | recovery | status | version)
+backup | recovery | status | version)
   if [ "$command" = 'status' ]; then
     echo -e "\n------------------------------------------------------------------------"
     echo "Crafter ${INTERFACE} container status"

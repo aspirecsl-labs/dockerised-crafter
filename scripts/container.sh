@@ -10,16 +10,16 @@ usage() {
   echo "Commands:"
   echo "(when a Crafter ${INTERFACE} container is not running)"
   echo "  start      Start a Crafter ${INTERFACE} container"
-  echo "  start-dev  Start a Crafter ${INTERFACE} container in 'dev' mode"
   echo "(when a Crafter ${INTERFACE} container is running)"
   echo "  backup     Backup the data in the Crafter ${INTERFACE} container"
+  echo "  copy-libs  Copy the Crafter ${INTERFACE} assets and the relevant third-party jars to local machine"
+  echo "  list       List all the running Crafter ${INTERFACE} containers"
   echo "  log        Show the Crafter ${INTERFACE} container log"
   echo "  login      Login to the Crafter ${INTERFACE} container"
   echo "  mode       Show the operational mode of the Crafter ${INTERFACE} container"
   echo "  port       Show the port bindings of the Crafter ${INTERFACE} container"
   echo "  recovery   Start the Crafter ${INTERFACE} container in recovery mode."
   echo "             No crafter services are started in this mode."
-  echo "  show       Show all the running Crafter ${INTERFACE} containers"
   echo "  status     Show the status of the Crafter ${INTERFACE} container"
   echo "  version    Show the Crafter ${INTERFACE} version of the container"
   echo "  volume     Show the volume container attached to the Crafter ${INTERFACE} container"
@@ -37,24 +37,18 @@ if [ -z "$INTERFACE" ] || [ -z "$CRAFTER_HOME" ] || [ -z "$CRAFTER_SCRIPTS_HOME"
 fi
 
 command=$1
+CMD_PREFIX="${CMD_PREFIX:-$(basename "$0")} $command"
+export CMD_PREFIX
 
 case $command in
-backup | log | login | mode | port | recovery | show | start | start-dev | status | version | volume)
-  CMD_PREFIX="${CMD_PREFIX:-$(basename "$0")} $command"
-  export CMD_PREFIX
-  if [ "${command}" = 'start' ]; then
-    "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}-start.sh" "${2}"
-  elif [ "${command}" = 'start-dev' ]; then
-    args="${2}"
-    if [ -z "$args" ]; then
-      args="mode=dev"
-    else
-      args="mode=dev,${args}"
-    fi
-    "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}-start.sh" ${args}
-  else
-    "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}-executor.sh" "$command" "${2}"
-  fi
+start)
+  "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}-start.sh" "${2}"
+  ;;
+copy-libs | list | log | port | volume)
+  "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}-monitor.sh" "$command" "${2}"
+  ;;
+backup | login | recovery | status | version)
+  "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}-executor.sh" "$command" "${2}"
   ;;
 *)
   usage

@@ -11,6 +11,8 @@ usage() {
   echo ""
   echo "Commands:"
   echo "  create  Create a Crafter ${INTERFACE} data volume container"
+  echo "  list    List all the Crafter ${INTERFACE} data volume containers"
+  echo "  prune   Prune unused Crafter ${INTERFACE} data volume containers and the associated local directories"
   echo ""
   echo "Run '${CMD_PREFIX:-$(basename "$0")} COMMAND --help' for more information about a command."
 }
@@ -27,7 +29,7 @@ fi
 command=$1
 
 case $command in
-create)
+create | list | prune)
   CMD_PREFIX="${CMD_PREFIX:-$(basename "$0")} $command"
   export CMD_PREFIX
   "${CRAFTER_SCRIPTS_HOME}/${CONTEXT}-${command}.sh" "${2}"

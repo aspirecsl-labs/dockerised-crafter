@@ -5,15 +5,17 @@ usage() {
   echo ""
   echo "Usage: $(basename "$0") name COMMAND"
   echo ""
-  echo "Transfer site data between a Crafter volume container and the host system"
+  echo "Manage the given Crafter site"
   echo ""
   echo "name: The site name"
   echo ""
   echo "Commands:"
-  echo "  context-status   Show the status of the specified site's context"
-  echo "  create           Create a site on the container"
-  echo "  context-destroy  Destroy the specified site's context"
-  echo "  context-rebuild  Rebuild the specified site's context"
+  echo "  create   Create a site."
+  echo "  delete   Delete the given site."
+  echo "  info     Show the site properties."
+  echo "  reset    Reset the specified site."
+  echo "  refresh  Refresh the specified site."
+  echo "  status   Show the status of the specified site."
   echo ""
 }
 
@@ -23,12 +25,12 @@ export SITE
 command=$2
 
 case $command in
-context-[_-0-9a-zA-Z]*)
+refresh | reset | status)
   "/engine/site-${command}.sh"
   RTNCD=$?
   ;;
-create)
-  "/studio/site-create.sh"
+create | delete | info)
+  "/studio/site-${command}.sh"
   RTNCD=$?
   ;;
 *)

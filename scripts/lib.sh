@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 arrayContainsElement() {
   local element
   for element in "${@:2}"; do
@@ -23,6 +25,7 @@ detachCrafterContainerAndDeleteNetwork() {
   local _network=$1
   local _container=$2
   if [ -n "$_network" ]; then
+    local nw_id
     nw_id=$(docker network ls --filter name="$_network" --format '{{.ID}}')
     if [ -n "$nw_id" ]; then
       sleep 1s
@@ -34,12 +37,14 @@ detachCrafterContainerAndDeleteNetwork() {
 }
 
 enumerateKeyValuePairs() {
-  overrides_regex='^([_a-z]*=[-._0-9a-zA-Z]*,)*[_a-z]*=[-._0-9a-zA-Z]*$'
+  local overrides_regex='^([_a-z]*=[-._0-9a-zA-Z]*,)*[_a-z]*=[-._0-9a-zA-Z]*$'
   if [[ $1 =~ $overrides_regex ]]; then
     IFS="," read -r -a options <<<"$1"
     for option in "${options[@]}"; do
       if [ -n "$option" ]; then
+        local k
         k=$(echo "$option" | cut -d"=" -f1 | tr '[:upper:]' '[:lower:]')
+        local v
         v=$(echo "$option" | cut -d"=" -f2)
         eval "$k"="$v"
       fi
@@ -104,11 +109,29 @@ input() {
   return 0
 }
 
+validatedInput() {
+  local label=$1
+  local nullable=$2
+  local sensitive=$3
+  IFS=" " read -r -a valid_values <<<"${@:4}"
+  local response
+  response=$(input "$label" "$nullable" "$sensitive")
+  while ! arrayContainsElement "$response" "${valid_values[@]}"; do
+    echo -e "\nInvalid response!" >&2
+    echo "Must be one of [${valid_values[*]}]" >&2
+    echo -e "Please try again.\n" >&2
+    response=$(input "$label" "$nullable" "$sensitive")
+  done
+  echo "$response"
+  return 0
+}
+
 readProperty() {
   if [[ $# -ne 2 || ! -r $1 ]]; then
     echo "Invalid arguments or property file not readable" >&2
     return 1
   fi
+  local PROP_VAL
   PROP_VAL=$(awk -F "=" \
     -v PROP_KEY="$2" \
     '{
@@ -121,3 +144,8 @@ readProperty() {
   echo "${PROP_VAL}"
   return 0
 }
+
+# Global Variables
+eval VOLUME_CONTAINER_IMAGE=tianon/true
+eval LOCAL_FS_LIB_LOC="$HOME/lib/crafter"
+eval LOCAL_FS_MOUNT_LOC="$HOME/workspace/crafter"
